@@ -1,0 +1,29 @@
+{
+  "name": "il-sole-fullstack",
+  "version": "1.0.0",
+  "description": "Sistema completo de producción de alimentos Il-Sole",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd BackEnd && npm run dev",
+    "dev:frontend": "cd FrontEnd && npm run dev",
+    "build": "cd FrontEnd && npm run build",
+    "install:all": "npm install && cd BackEnd && npm install && cd ../FrontEnd && npm install",
+    "start:backend": "cd BackEnd && npm start",
+    "start:frontend": "cd FrontEnd && npm run preview",
+    "test:connection": "cd BackEnd && npm run test-connection",
+    "setup:db": "cd BackEnd && npm run setup-db"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "keywords": [
+    "react",
+    "express",
+    "postgresql",
+    "supabase",
+    "production",
+    "food"
+  ],
+  "author": "Il-Sole Team",
+  "license": "MIT"
+} 
