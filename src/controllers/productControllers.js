@@ -1,10 +1,10 @@
-const client = require('../config/db');
+const { Product } = require('../models');
 
 // Obtener todos los productos
 exports.getAllProducts = async (req, res) => {
   try {
-    const result = await client.query('SELECT * FROM Product');
-    res.json(result.rows);
+    const products = await Product.findAll();
+    res.json(products);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al obtener los productos' });
@@ -15,11 +15,11 @@ exports.getAllProducts = async (req, res) => {
 exports.getProductById = async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await client.query('SELECT * FROM Product WHERE id = $1', [id]);
-    if (result.rows.length === 0) {
+    const product = await Product.findById(id);
+    if (!product) {
       return res.status(404).json({ error: 'Producto no encontrado' });
     }
-    res.json(result.rows[0]);
+    res.json(product);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al obtener el producto' });
@@ -30,11 +30,8 @@ exports.getProductById = async (req, res) => {
 exports.createProduct = async (req, res) => {
   const { name, description } = req.body;
   try {
-    const result = await client.query(
-      'INSERT INTO Product (name, description) VALUES ($1, $2) RETURNING *',
-      [name, description]
-    );
-    res.status(201).json(result.rows[0]);
+    const product = await Product.create({ name, description });
+    res.status(201).json(product);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al crear el producto' });
@@ -46,14 +43,15 @@ exports.updateProduct = async (req, res) => {
   const { id } = req.params;
   const { name, description } = req.body;
   try {
-    const result = await client.query(
-      'UPDATE Product SET name = $1, description = $2 WHERE id = $3 RETURNING *',
-      [name, description, id]
-    );
-    if (result.rows.length === 0) {
+    const productData = {};
+    if (name) productData.name = name;
+    if (description) productData.description = description;
+    
+    const product = await Product.update(id, productData);
+    if (!product) {
       return res.status(404).json({ error: 'Producto no encontrado' });
     }
-    res.json(result.rows[0]);
+    res.json(product);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al actualizar el producto' });
@@ -64,13 +62,37 @@ exports.updateProduct = async (req, res) => {
 exports.deleteProduct = async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await client.query('DELETE FROM Product WHERE id = $1 RETURNING *', [id]);
-    if (result.rows.length === 0) {
+    const product = await Product.delete(id);
+    if (!product) {
       return res.status(404).json({ error: 'Producto no encontrado' });
     }
-    res.json({ message: 'Producto eliminado correctamente', product: result.rows[0] });
+    res.json({ message: 'Producto eliminado correctamente', product });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al eliminar el producto' });
+  }
+};
+
+// Buscar productos por nombre
+exports.getProductsByName = async (req, res) => {
+  const { name } = req.params;
+  try {
+    const products = await Product.findByName(name);
+    res.json(products);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al buscar productos' });
+  }
+};
+
+// Buscar productos por descripción
+exports.getProductsByDescription = async (req, res) => {
+  const { description } = req.params;
+  try {
+    const products = await Product.findByDescription(description);
+    res.json(products);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al buscar productos' });
   }
 };

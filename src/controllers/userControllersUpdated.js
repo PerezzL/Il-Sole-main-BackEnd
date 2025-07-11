@@ -1,4 +1,4 @@
-const { User } = require('../models');
+const User = require('../models/User');
 
 // Obtener todos los usuarios
 exports.getAllUsers = async (req, res) => {
@@ -28,13 +28,26 @@ exports.getUserById = async (req, res) => {
 
 // Crear un nuevo usuario
 exports.createUser = async (req, res) => {
-  const { username, password, email, role } = req.body;
+  const { username, password, email, role = 'user' } = req.body;
   try {
-    const userData = { username, password, email };
-    if (role) userData.role = role;
-    
-    const user = await User.create(userData);
-    res.status(201).json(user);
+    // Verificar si el usuario ya existe
+    const existingUser = await User.findByUsername(username);
+    if (existingUser) {
+      return res.status(400).json({ error: 'El nombre de usuario ya existe' });
+    }
+
+    const existingEmail = await User.findByEmail(email);
+    if (existingEmail) {
+      return res.status(400).json({ error: 'El email ya está registrado' });
+    }
+
+    // Validar que el rol sea válido
+    if (role && !['user', 'admin'].includes(role)) {
+      return res.status(400).json({ error: 'Rol inválido. Debe ser "user" o "admin"' });
+    }
+
+    const newUser = await User.create({ username, password, email, role });
+    res.status(201).json(newUser);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al crear el usuario' });
@@ -46,17 +59,16 @@ exports.updateUser = async (req, res) => {
   const { id } = req.params;
   const { username, password, email, role } = req.body;
   try {
-    const userData = {};
-    if (username) userData.username = username;
-    if (password) userData.password = password;
-    if (email) userData.email = email;
-    if (role) userData.role = role;
-    
-    const user = await User.update(id, userData);
-    if (!user) {
+    // Validar que el rol sea válido si se proporciona
+    if (role && !['user', 'admin'].includes(role)) {
+      return res.status(400).json({ error: 'Rol inválido. Debe ser "user" o "admin"' });
+    }
+
+    const updatedUser = await User.update(id, { username, password, email, role });
+    if (!updatedUser) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
-    res.json(user);
+    res.json(updatedUser);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al actualizar el usuario' });
@@ -67,20 +79,20 @@ exports.updateUser = async (req, res) => {
 exports.deleteUser = async (req, res) => {
   const { id } = req.params;
   try {
-    const user = await User.delete(id);
-    if (!user) {
+    const deletedUser = await User.delete(id);
+    if (!deletedUser) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
-    res.json({ message: 'Usuario eliminado correctamente', user });
+    res.json({ message: 'Usuario eliminado correctamente', user: deletedUser });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al eliminar el usuario' });
   }
 };
 
-// Buscar usuario por nombre de usuario
-exports.getUserByUsername = async (req, res) => {
-  const { username } = req.params;
+// Buscar usuarios por nombre de usuario
+exports.searchUsersByUsername = async (req, res) => {
+  const { username } = req.query;
   try {
     const user = await User.findByUsername(username);
     if (!user) {
@@ -89,13 +101,13 @@ exports.getUserByUsername = async (req, res) => {
     res.json(user);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Error al obtener el usuario' });
+    res.status(500).json({ error: 'Error al buscar el usuario' });
   }
 };
 
-// Buscar usuario por email
-exports.getUserByEmail = async (req, res) => {
-  const { email } = req.params;
+// Buscar usuarios por email
+exports.searchUsersByEmail = async (req, res) => {
+  const { email } = req.query;
   try {
     const user = await User.findByEmail(email);
     if (!user) {
@@ -104,24 +116,12 @@ exports.getUserByEmail = async (req, res) => {
     res.json(user);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Error al obtener el usuario' });
-  }
-};
-
-// Obtener usuarios por rol
-exports.getUsersByRole = async (req, res) => {
-  const { role } = req.params;
-  try {
-    const users = await User.findByRole(role);
-    res.json(users);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al obtener los usuarios' });
+    res.status(500).json({ error: 'Error al buscar el usuario' });
   }
 };
 
 // Obtener todos los administradores
-exports.getAdmins = async (req, res) => {
+exports.getAllAdmins = async (req, res) => {
   try {
     const admins = await User.findAdmins();
     res.json(admins);
@@ -132,7 +132,7 @@ exports.getAdmins = async (req, res) => {
 };
 
 // Obtener todos los usuarios normales
-exports.getNormalUsers = async (req, res) => {
+exports.getAllNormalUsers = async (req, res) => {
   try {
     const users = await User.findNormalUsers();
     res.json(users);
@@ -142,18 +142,38 @@ exports.getNormalUsers = async (req, res) => {
   }
 };
 
-// Actualizar solo el rol de un usuario
+// Buscar usuarios por rol
+exports.getUsersByRole = async (req, res) => {
+  const { role } = req.params;
+  try {
+    if (!['user', 'admin'].includes(role)) {
+      return res.status(400).json({ error: 'Rol inválido. Debe ser "user" o "admin"' });
+    }
+    
+    const users = await User.findByRole(role);
+    res.json(users);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al obtener los usuarios por rol' });
+  }
+};
+
+// Actualizar rol de usuario
 exports.updateUserRole = async (req, res) => {
   const { id } = req.params;
   const { role } = req.body;
   try {
-    const user = await User.updateRole(id, role);
-    if (!user) {
+    if (!['user', 'admin'].includes(role)) {
+      return res.status(400).json({ error: 'Rol inválido. Debe ser "user" o "admin"' });
+    }
+
+    const updatedUser = await User.updateRole(id, role);
+    if (!updatedUser) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
-    res.json(user);
+    res.json(updatedUser);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al actualizar el rol del usuario' });
   }
-};
+}; 

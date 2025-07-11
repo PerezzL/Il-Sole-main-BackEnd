@@ -1,14 +1,7 @@
-const { Client } = require('pg');
+const postgres = require('postgres');
 
-const client = new Client({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false,
-  },
-});
+// Configuración que sabemos que funciona
+const connectionString = 'postgres://postgres.xfsffvercadqouvctkhw:jH79Zsc8IsZ6hkT8@aws-0-sa-east-1.pooler.supabase.com:5432/postgres?sslmode=require';
+const sql = postgres(connectionString);
 
-client.connect()
-  .then(() => console.log('✅ Conectado a la base de datos'))
-  .catch(err => console.error('Error al conectar a la base de datos', err));
-
-module.exports = client;
+module.exports = sql;

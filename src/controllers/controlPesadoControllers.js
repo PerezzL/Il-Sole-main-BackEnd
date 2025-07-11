@@ -1,9 +1,9 @@
-const client = require('../config/db');
+const pool = require('../config/db');
 
 // Obtener todos los registros de pesado
 exports.getAllPesados = async (req, res) => {
   try {
-    const result = await client.query('SELECT * FROM ControlPesado');
+    const result = await pool.query('SELECT * FROM ControlPesado');
     res.json(result.rows);
   } catch (err) {
     console.error(err);
@@ -15,7 +15,7 @@ exports.getAllPesados = async (req, res) => {
 exports.getPesadoById = async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await client.query('SELECT * FROM ControlPesado WHERE id = $1', [id]);
+    const result = await pool.query('SELECT * FROM ControlPesado WHERE id = $1', [id]);
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Registro de pesado no encontrado' });
     }
@@ -30,7 +30,7 @@ exports.getPesadoById = async (req, res) => {
 exports.createPesado = async (req, res) => {
   const { producto, materiaPrima, peso, fecha, observaciones } = req.body;
   try {
-    const result = await client.query(
+    const result = await pool.query(
       'INSERT INTO ControlPesado (producto, materiaPrima, peso, fecha, observaciones) VALUES ($1, $2, $3, $4, $5) RETURNING *',
       [producto, materiaPrima, peso, fecha, observaciones]
     );
@@ -46,7 +46,7 @@ exports.updatePesado = async (req, res) => {
   const { id } = req.params;
   const { producto, materiaPrima, peso, fecha, observaciones } = req.body;
   try {
-    const result = await client.query(
+    const result = await pool.query(
       'UPDATE ControlPesado SET producto = $1, materiaPrima = $2, peso = $3, fecha = $4, observaciones = $5 WHERE id = $6 RETURNING *',
       [producto, materiaPrima, peso, fecha, observaciones, id]
     );
@@ -64,7 +64,7 @@ exports.updatePesado = async (req, res) => {
 exports.deletePesado = async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await client.query('DELETE FROM ControlPesado WHERE id = $1 RETURNING *', [id]);
+    const result = await pool.query('DELETE FROM ControlPesado WHERE id = $1 RETURNING *', [id]);
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Registro de pesado no encontrado' });
     }

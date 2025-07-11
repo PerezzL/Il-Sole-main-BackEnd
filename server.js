@@ -3,20 +3,13 @@ require("dotenv").config();
 console.log('DATABASE_URL:', process.env.DATABASE_URL);
 const express = require("express");
 const cors = require("cors");
-const { Pool } = require("pg");
+const pool = require('./src/config/db');
 
 const app = express();
 const port = process.env.PORT || 5000;
 
 // Conexion a PostgreSQL
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
-  });
-  
-  pool.connect()
-    .then(() => console.log("✅ Conectado a la base de datos"))
-    .catch((err) => console.error("❌ Error al conectar la base de datos", err));
+
 
 console.log('Iniciando importación de rutas...');
 const productRoutes = require('./src/routes/productRoutes');
