@@ -2,12 +2,17 @@ const pool = require('../config/db');
 
 class Expendio {
   static async findAll() {
-    const result = await pool.query('SELECT * FROM Expendio');
-    return result.rows;
+    try {      const result = await pool.query('SELECT * FROM "Expendio" ORDER BY created_at DESC');      
+      // Log simple de confirmación
+      if (result.rows.length > 0) {      } else {      }
+      
+      return result.rows;
+    } catch (error) {      throw error;
+    }
   }
 
   static async findById(id) {
-    const result = await pool.query('SELECT * FROM Expendio WHERE id = $1', [id]);
+    const result = await pool.query('SELECT * FROM "Expendio" WHERE id = $1', [id]);
     return result.rows[0];
   }
 
@@ -18,12 +23,13 @@ class Expendio {
       destino, 
       tempTransporte, 
       LimpTransporte, 
-      responsable 
+      responsable,
+      usuario_id
     } = expendioData;
     
     const result = await pool.query(
-      'INSERT INTO Expendio (producto, lote, destino, tempTransporte, LimpTransporte, responsable) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [producto, lote, destino, tempTransporte, LimpTransporte, responsable]
+      'INSERT INTO "Expendio" (producto, lote, destino, temptransporte, limptransporte, responsable, usuario_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+      [producto, lote, destino, tempTransporte, LimpTransporte, responsable, usuario_id]
     );
     return result.rows[0];
   }
@@ -39,47 +45,47 @@ class Expendio {
     } = expendioData;
     
     const result = await pool.query(
-      'UPDATE Expendio SET producto = $1, lote = $2, destino = $3, tempTransporte = $4, LimpTransporte = $5, responsable = $6 WHERE id = $7 RETURNING *',
+      'UPDATE "Expendio" SET producto = $1, lote = $2, destino = $3, temptransporte = $4, limptransporte = $5, responsable = $6 WHERE id = $7 RETURNING *',
       [producto, lote, destino, tempTransporte, LimpTransporte, responsable, id]
     );
     return result.rows[0];
   }
 
   static async delete(id) {
-    const result = await pool.query('DELETE FROM Expendio WHERE id = $1 RETURNING *', [id]);
+    const result = await pool.query('DELETE FROM "Expendio" WHERE id = $1 RETURNING *', [id]);
     return result.rows[0];
   }
 
   static async findByProducto(producto) {
-    const result = await pool.query('SELECT * FROM Expendio WHERE producto ILIKE $1', [`%${producto}%`]);
+    const result = await pool.query('SELECT * FROM "Expendio" WHERE producto ILIKE $1', [`%${producto}%`]);
     return result.rows;
   }
 
   static async findByLote(lote) {
-    const result = await pool.query('SELECT * FROM Expendio WHERE lote = $1', [lote]);
+    const result = await pool.query('SELECT * FROM "Expendio" WHERE lote = $1', [lote]);
     return result.rows;
   }
 
   static async findByDestino(destino) {
-    const result = await pool.query('SELECT * FROM Expendio WHERE destino ILIKE $1', [`%${destino}%`]);
+    const result = await pool.query('SELECT * FROM "Expendio" WHERE destino ILIKE $1', [`%${destino}%`]);
     return result.rows;
   }
 
   static async findByResponsable(responsable) {
-    const result = await pool.query('SELECT * FROM Expendio WHERE responsable ILIKE $1', [`%${responsable}%`]);
+    const result = await pool.query('SELECT * FROM "Expendio" WHERE responsable ILIKE $1', [`%${responsable}%`]);
     return result.rows;
   }
 
   static async findByTempTransporteRange(tempMin, tempMax) {
     const result = await pool.query(
-      'SELECT * FROM Expendio WHERE tempTransporte BETWEEN $1 AND $2 ORDER BY tempTransporte',
+      'SELECT * FROM "Expendio" WHERE temptransporte BETWEEN $1 AND $2 ORDER BY temptransporte',
       [tempMin, tempMax]
     );
     return result.rows;
   }
 
   static async findByLimpTransporte(limpTransporte) {
-    const result = await pool.query('SELECT * FROM Expendio WHERE LimpTransporte = $1', [limpTransporte]);
+    const result = await pool.query('SELECT * FROM "Expendio" WHERE limptransporte = $1', [limpTransporte]);
     return result.rows;
   }
 
@@ -89,8 +95,8 @@ class Expendio {
         producto,
         destino,
         COUNT(*) as total_expendios,
-        AVG(tempTransporte) as promedio_temperatura
-      FROM Expendio 
+        AVG(temptransporte) as promedio_temperatura
+      FROM "Expendio" 
       GROUP BY producto, destino
       ORDER BY producto, destino
     `);
@@ -104,7 +110,7 @@ class Expendio {
         COUNT(*) as total_expendios,
         COUNT(DISTINCT producto) as productos_diferentes,
         COUNT(DISTINCT lote) as lotes_diferentes
-      FROM Expendio 
+      FROM "Expendio" 
       GROUP BY destino
       ORDER BY total_expendios DESC
     `);
@@ -118,7 +124,7 @@ class Expendio {
         COUNT(*) as total_expendios,
         COUNT(DISTINCT producto) as productos_diferentes,
         COUNT(DISTINCT destino) as destinos_diferentes
-      FROM Expendio 
+      FROM "Expendio" 
       GROUP BY responsable
       ORDER BY total_expendios DESC
     `);
@@ -132,7 +138,7 @@ class Expendio {
         producto,
         COUNT(*) as total_expendios,
         COUNT(DISTINCT destino) as destinos_diferentes
-      FROM Expendio 
+      FROM "Expendio" 
       GROUP BY lote, producto
       ORDER BY lote
     `);

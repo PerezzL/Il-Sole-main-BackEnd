@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const productController = require('../controllers/productControllers');
+const { authenticateToken, requireAdmin } = require('../middleware/auth');
 
-// Rutas de productos
-router.get('/', productController.getAllProducts);        // Obtener todos los productos
-router.get('/:id', productController.getProductById);    // Obtener producto por ID
-router.post('/', productController.createProduct);       // Crear un producto
-router.put('/:id', productController.updateProduct);     // Actualizar un producto
-router.delete('/:id', productController.deleteProduct);  // Eliminar un producto
+router.get('/', authenticateToken, productController.getAllProducts);
+router.get('/:id', authenticateToken, productController.getProductById);
+router.post('/', authenticateToken, requireAdmin, productController.createProduct);
+router.put('/:id', authenticateToken, requireAdmin, productController.updateProduct);
+router.delete('/:id', authenticateToken, requireAdmin, productController.deleteProduct);
 
 module.exports = router;

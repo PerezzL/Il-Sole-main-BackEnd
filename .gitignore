@@ -1,3 +1,23 @@
 node_modules
 # Keep environment variables out of version control
 .env
+.env.local
+.env.production
+*.env
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+
+# SSL certificates and sensitive files
+*.pem
+*.key
+*.crt

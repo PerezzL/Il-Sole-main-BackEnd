@@ -1,13 +1,23 @@
-const { User } = require('../models');
+const bcrypt = require('bcryptjs');
+const User = require('../models/User');
+
+function userSinPassword(row) {
+  if (!row) return row;
+  const { password: _p, ...rest } = row;
+  return rest;
+}
 
 // Obtener todos los usuarios
 exports.getAllUsers = async (req, res) => {
   try {
     const users = await User.findAll();
-    res.json(users);
+    res.json(users.map(userSinPassword));
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al obtener los usuarios' });
+    res.status(500).json({
+      error: 'Error al obtener usuarios',
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined,
+      code: err.code,
+    });
   }
 };
 
@@ -19,9 +29,8 @@ exports.getUserById = async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
-    res.json(user);
+    res.json(userSinPassword(user));
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: 'Error al obtener el usuario' });
   }
 };
@@ -32,12 +41,13 @@ exports.createUser = async (req, res) => {
   try {
     const userData = { username, password, email };
     if (role) userData.role = role;
-    
     const user = await User.create(userData);
-    res.status(201).json(user);
+    res.status(201).json(userSinPassword(user));
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al crear el usuario' });
+    res.status(500).json({
+      error: 'Error al crear el usuario',
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined,
+    });
   }
 };
 
@@ -46,19 +56,22 @@ exports.updateUser = async (req, res) => {
   const { id } = req.params;
   const { username, password, email, role } = req.body;
   try {
-    const userData = {};
-    if (username) userData.username = username;
-    if (password) userData.password = password;
-    if (email) userData.email = email;
-    if (role) userData.role = role;
-    
-    const user = await User.update(id, userData);
-    if (!user) {
+    const existing = await User.findById(id);
+    if (!existing) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
-    res.json(user);
+    let passwordHashed = existing.password;
+    if (password && String(password).length > 0) {
+      passwordHashed = await bcrypt.hash(password, 10);
+    }
+    const user = await User.update(id, {
+      username: username !== undefined ? username : existing.username,
+      password: passwordHashed,
+      email: email !== undefined ? email : existing.email,
+      role: role !== undefined ? role : existing.role,
+    });
+    res.json(userSinPassword(user));
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: 'Error al actualizar el usuario' });
   }
 };
@@ -67,14 +80,19 @@ exports.updateUser = async (req, res) => {
 exports.deleteUser = async (req, res) => {
   const { id } = req.params;
   try {
+    // Verificar que el usuario no se esté eliminando a sí mismo
+    if (parseInt(id) === req.user.id) {
+      return res.status(403).json({ 
+        error: 'No puedes eliminar tu propia cuenta' 
+      });
+    }
+
     const user = await User.delete(id);
     if (!user) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
-    res.json({ message: 'Usuario eliminado correctamente', user });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al eliminar el usuario' });
+    res.json({ message: 'Usuario eliminado correctamente', user: userSinPassword(user) });
+  } catch (err) {    res.status(500).json({ error: 'Error al eliminar el usuario' });
   }
 };
 
@@ -87,9 +105,7 @@ exports.getUserByUsername = async (req, res) => {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
     res.json(user);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al obtener el usuario' });
+  } catch (err) {    res.status(500).json({ error: 'Error al obtener el usuario' });
   }
 };
 
@@ -102,9 +118,7 @@ exports.getUserByEmail = async (req, res) => {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
     res.json(user);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al obtener el usuario' });
+  } catch (err) {    res.status(500).json({ error: 'Error al obtener el usuario' });
   }
 };
 
@@ -114,9 +128,7 @@ exports.getUsersByRole = async (req, res) => {
   try {
     const users = await User.findByRole(role);
     res.json(users);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al obtener los usuarios' });
+  } catch (err) {    res.status(500).json({ error: 'Error al obtener los usuarios' });
   }
 };
 
@@ -125,9 +137,7 @@ exports.getAdmins = async (req, res) => {
   try {
     const admins = await User.findAdmins();
     res.json(admins);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al obtener los administradores' });
+  } catch (err) {    res.status(500).json({ error: 'Error al obtener los administradores' });
   }
 };
 
@@ -136,9 +146,7 @@ exports.getNormalUsers = async (req, res) => {
   try {
     const users = await User.findNormalUsers();
     res.json(users);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al obtener los usuarios normales' });
+  } catch (err) {    res.status(500).json({ error: 'Error al obtener los usuarios normales' });
   }
 };
 
@@ -152,8 +160,6 @@ exports.updateUserRole = async (req, res) => {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
     res.json(user);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al actualizar el rol del usuario' });
+  } catch (err) {    res.status(500).json({ error: 'Error al actualizar el rol del usuario' });
   }
 };

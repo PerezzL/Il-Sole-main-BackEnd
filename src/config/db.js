@@ -1,7 +1,29 @@
-const postgres = require('postgres');
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env') });
 
-// Configuración que sabemos que funciona
-const connectionString = 'postgres://postgres.xfsffvercadqouvctkhw:jH79Zsc8IsZ6hkT8@aws-0-sa-east-1.pooler.supabase.com:5432/postgres?sslmode=require';
-const sql = postgres(connectionString);
+const { Pool } = require('pg');
+const { getPgSslOptions } = require('./pgSsl');
 
-module.exports = sql;
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error(
+    'DATABASE_URL no está definida. Configurá la variable en BackEnd/.env (sin commitear secretos).'
+  );
+}
+
+const pool = new Pool({
+  connectionString,
+  ssl: getPgSslOptions(connectionString),
+  max: 20,
+  idleTimeoutMillis: 300000,
+  connectionTimeoutMillis: 120000,
+  query_timeout: 120000,
+  statement_timeout: 120000,
+});
+
+pool.on('connect', () => {});
+
+pool.on('error', () => {});
+
+module.exports = pool;

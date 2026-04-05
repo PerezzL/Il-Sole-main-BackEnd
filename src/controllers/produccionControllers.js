@@ -1,13 +1,17 @@
-const { Produccion } = require('../models');
+const Produccion = require('../models/Produccion');
 
 // Obtener todas las producciones
 exports.getAllProducciones = async (req, res) => {
-  try {
-    const producciones = await Produccion.findAll();
+  try {    const producciones = await Produccion.findAll();    
+    // Log simple de confirmación
+    if (producciones.length > 0) {    }
+    
     res.json(producciones);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al obtener las producciones' });
+  } catch (err) {    res.status(500).json({ 
+      error: 'Error al obtener producciones',
+      details: err.message,
+      code: err.code 
+    });
   }
 };
 
@@ -20,9 +24,7 @@ exports.getProduccionById = async (req, res) => {
       return res.status(404).json({ error: 'Producción no encontrada' });
     }
     res.json(produccion);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al obtener la producción' });
+  } catch (err) {    res.status(500).json({ error: 'Error al obtener la producción' });
   }
 };
 
@@ -32,30 +34,41 @@ exports.createProduccion = async (req, res) => {
     producto,
     materiaPrima,
     lote,
+    lotePesada,
+    loteMateriaPrima,
     planProduccion,
     produccion,
     pesoDescarte,
+    fechaElaboracion,
     observaciones,
     comentarios
   } = req.body;
   
   try {
-    const produccionData = {
+    // Obtener información del usuario autenticado
+    const responsable = req.user?.username || req.user?.name || 'Usuario desconocido';
+    const usuario_id = req.user?.id;    
+    const nuevaProduccion = await Produccion.create({
       producto,
       materiaPrima,
       lote,
+      lotePesada,
+      loteMateriaPrima,
       planProduccion,
       produccion,
       pesoDescarte,
+      fechaElaboracion,
       observaciones,
-      comentarios
-    };
-    
-    const newProduccion = await Produccion.create(produccionData);
-    res.status(201).json(newProduccion);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al crear la producción' });
+      comentarios,
+      responsable,
+      usuario_id
+    });    
+    res.status(201).json(nuevaProduccion);
+  } catch (err) {    res.status(500).json({ 
+      error: 'Error al crear la producción', 
+      details: err.message,
+      code: err.code 
+    });
   }
 };
 
@@ -66,9 +79,12 @@ exports.updateProduccion = async (req, res) => {
     producto,
     materiaPrima,
     lote,
+    lotePesada,
+    loteMateriaPrima,
     planProduccion,
     produccion,
     pesoDescarte,
+    fechaElaboracion,
     observaciones,
     comentarios
   } = req.body;
@@ -78,9 +94,12 @@ exports.updateProduccion = async (req, res) => {
     if (producto) produccionData.producto = producto;
     if (materiaPrima) produccionData.materiaPrima = materiaPrima;
     if (lote) produccionData.lote = lote;
+    if (lotePesada !== undefined) produccionData.lotePesada = lotePesada;
+    if (loteMateriaPrima !== undefined) produccionData.loteMateriaPrima = loteMateriaPrima;
     if (planProduccion !== undefined) produccionData.planProduccion = planProduccion;
     if (produccion) produccionData.produccion = produccion;
     if (pesoDescarte !== undefined) produccionData.pesoDescarte = pesoDescarte;
+    if (fechaElaboracion !== undefined) produccionData.fechaElaboracion = fechaElaboracion;
     if (observaciones !== undefined) produccionData.observaciones = observaciones;
     if (comentarios !== undefined) produccionData.comentarios = comentarios;
     
@@ -89,9 +108,7 @@ exports.updateProduccion = async (req, res) => {
       return res.status(404).json({ error: 'Producción no encontrada' });
     }
     res.json(updatedProduccion);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al actualizar la producción' });
+  } catch (err) {    res.status(500).json({ error: 'Error al actualizar la producción' });
   }
 };
 
@@ -104,9 +121,7 @@ exports.deleteProduccion = async (req, res) => {
       return res.status(404).json({ error: 'Producción no encontrada' });
     }
     res.json({ message: 'Producción eliminada correctamente', produccion });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al eliminar la producción' });
+  } catch (err) {    res.status(500).json({ error: 'Error al eliminar la producción' });
   }
 };
 
@@ -116,9 +131,7 @@ exports.getProduccionesByProducto = async (req, res) => {
   try {
     const producciones = await Produccion.findByProducto(producto);
     res.json(producciones);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al buscar producciones' });
+  } catch (err) {    res.status(500).json({ error: 'Error al buscar producciones' });
   }
 };
 
@@ -128,9 +141,7 @@ exports.getProduccionesByMateriaPrima = async (req, res) => {
   try {
     const producciones = await Produccion.findByMateriaPrima(materiaPrima);
     res.json(producciones);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al buscar producciones' });
+  } catch (err) {    res.status(500).json({ error: 'Error al buscar producciones' });
   }
 };
 
@@ -140,9 +151,7 @@ exports.getProduccionesByLote = async (req, res) => {
   try {
     const producciones = await Produccion.findByLote(lote);
     res.json(producciones);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al buscar producciones' });
+  } catch (err) {    res.status(500).json({ error: 'Error al buscar producciones' });
   }
 };
 
@@ -152,9 +161,7 @@ exports.getProduccionesByPlanProduccion = async (req, res) => {
   try {
     const producciones = await Produccion.findByPlanProduccion(planProduccion);
     res.json(producciones);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al buscar producciones' });
+  } catch (err) {    res.status(500).json({ error: 'Error al buscar producciones' });
   }
 };
 
@@ -164,9 +171,7 @@ exports.getProduccionesByProduccionRange = async (req, res) => {
   try {
     const producciones = await Produccion.findByProduccionRange(produccionMin, produccionMax);
     res.json(producciones);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al buscar producciones' });
+  } catch (err) {    res.status(500).json({ error: 'Error al buscar producciones' });
   }
 };
 
@@ -176,9 +181,7 @@ exports.getProduccionesByPesoDescarteRange = async (req, res) => {
   try {
     const producciones = await Produccion.findByPesoDescarteRange(pesoMin, pesoMax);
     res.json(producciones);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al buscar producciones' });
+  } catch (err) {    res.status(500).json({ error: 'Error al buscar producciones' });
   }
 };
 
@@ -187,8 +190,6 @@ exports.getEstadisticasProduccion = async (req, res) => {
   try {
     const estadisticas = await Produccion.getEstadisticasProduccion();
     res.json(estadisticas);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al obtener estadísticas' });
+  } catch (err) {    res.status(500).json({ error: 'Error al obtener estadísticas' });
   }
 };

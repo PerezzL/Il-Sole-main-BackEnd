@@ -1,71 +1,83 @@
+const pool = require('../src/config/db');
 const fs = require('fs');
 const path = require('path');
-const sql = require('../src/config/db');
 
 async function setupDatabase() {
   try {
-    console.log('🚀 Iniciando configuración de la base de datos Supabase...');
+    console.log('🚀 Configurando base de datos...');
     
-    // Leer el archivo SQL del esquema
+    // Leer el archivo de esquema
     const schemaPath = path.join(__dirname, '../database/schema.sql');
     const schemaSQL = fs.readFileSync(schemaPath, 'utf8');
     
-    console.log('📖 Leyendo esquema de base de datos...');
+    console.log('📋 Ejecutando esquema de base de datos...');
     
-    // Dividir el SQL en comandos individuales
-    const commands = schemaSQL
-      .split(';')
-      .map(cmd => cmd.trim())
-      .filter(cmd => cmd.length > 0 && !cmd.startsWith('--'));
+    // Dividir el esquema en comandos individuales para mejor manejo de errores
+    const commands = schemaSQL.split(';').filter(cmd => cmd.trim());
     
-    console.log(`📝 Ejecutando ${commands.length} comandos SQL...`);
-    
-    // Ejecutar cada comando
-    for (let i = 0; i < commands.length; i++) {
-      const command = commands[i];
+    for (const command of commands) {
       if (command.trim()) {
         try {
-          await sql.unsafe(command);
-          console.log(`✅ Comando ${i + 1}/${commands.length} ejecutado correctamente`);
+          await pool.query(command);
         } catch (error) {
-          // Ignorar errores de "ya existe" para tablas e índices
-          if (error.message.includes('already exists') || error.message.includes('duplicate key')) {
-            console.log(`⚠️  Comando ${i + 1}/${commands.length} ya existe (ignorado)`);
+          // Ignorar errores de elementos que ya existen
+          if (error.code === '42710' || error.code === '42P07') {
+            console.log(`⚠️  Elemento ya existe: ${error.message.split('"')[1] || 'N/A'}`);
           } else {
-            console.error(`❌ Error en comando ${i + 1}/${commands.length}:`, error.message);
+            console.log(`⚠️  Error ejecutando comando: ${error.message}`);
           }
         }
       }
     }
     
-    console.log('🎉 Configuración de base de datos completada exitosamente!');
+    console.log('✅ Esquema de base de datos procesado');
     
-    // Verificar que las tablas se crearon correctamente
-    console.log('\n📊 Verificando tablas creadas...');
-    const tablesResult = await sql`
-      SELECT table_name 
-      FROM information_schema.tables 
-      WHERE table_schema = 'public' 
-      AND table_type = 'BASE TABLE'
-      ORDER BY table_name;
-    `;
+    // Verificar que las tablas se crearon
+    console.log('\n🔍 Verificando tablas creadas...');
     
-    console.log('📋 Tablas disponibles:');
-    tablesResult.forEach(row => {
-      console.log(`  - ${row.table_name}`);
-    });
+    const tables = [
+      'User',
+      'Product', 
+      'Recepcion',
+      'Produccion',
+      'Envasado',
+      'ControlPesado',
+      'Expendio'
+    ];
+    
+    for (const table of tables) {
+      try {
+        const result = await pool.query(`
+          SELECT EXISTS (
+            SELECT FROM information_schema.tables 
+            WHERE table_schema = 'public' 
+            AND table_name = $1
+          );
+        `, [table]);
+        
+        if (result.rows[0].exists) {
+          console.log(`✅ Tabla "${table}" existe`);
+          
+          // Contar registros en la tabla
+          const countResult = await pool.query(`SELECT COUNT(*) FROM "${table}"`);
+          console.log(`   - Registros: ${countResult.rows[0].count}`);
+        } else {
+          console.log(`❌ Tabla "${table}" NO existe`);
+        }
+      } catch (error) {
+        console.log(`❌ Error verificando tabla "${table}": ${error.message}`);
+      }
+    }
+    
+    console.log('\n🎉 Configuración de base de datos completada');
     
   } catch (error) {
-    console.error('❌ Error durante la configuración:', error);
+    console.error('❌ Error configurando base de datos:', error);
+    console.error('Detalles:', error.message);
   } finally {
-    await sql.end();
-    console.log('🔌 Conexión cerrada');
+    await pool.end();
   }
 }
 
-// Ejecutar si se llama directamente
-if (require.main === module) {
-  setupDatabase();
-}
-
-module.exports = setupDatabase; 
+// Ejecutar la configuración
+setupDatabase(); 

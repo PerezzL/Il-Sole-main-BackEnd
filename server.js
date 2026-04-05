@@ -1,37 +1,180 @@
 // server.js
-require("dotenv").config();
-console.log('DATABASE_URL:', process.env.DATABASE_URL);
-const express = require("express");
-const cors = require("cors");
+require('dotenv').config();
+const { getJwtSecret, isProd } = require('./src/config/secrets');
+getJwtSecret();
+
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
 const pool = require('./src/config/db');
 
 const app = express();
+app.set('trust proxy', 1);
 const port = process.env.PORT || 5000;
+
+// CORS: con NODE_ENV distinto de production se permiten localhost (Vite, CRA, etc.).
+// Si corrés en local con NODE_ENV=production, agregá CORS_ALLOW_LOCALHOST=1 o incluí el origen en CORS_ORIGINS.
+const defaultDevOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:5173',
+  'http://localhost:4173',
+  'http://localhost:8080',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:3001',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:4173',
+  'http://127.0.0.1:8080',
+];
+
+function localhostCorsEnabled() {
+  if (!isProd) return true;
+  const v = String(process.env.CORS_ALLOW_LOCALHOST || '').toLowerCase();
+  return v === '1' || v === 'true' || v === 'yes';
+}
+
+function getCorsAllowedOrigins() {
+  const set = new Set();
+  if (localhostCorsEnabled()) {
+    defaultDevOrigins.forEach((o) => set.add(o));
+  }
+  (process.env.CORS_ORIGINS || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .forEach((o) => set.add(o));
+  return set;
+}
+
+const corsAllowedOrigins = getCorsAllowedOrigins();
+
+if (isProd && corsAllowedOrigins.size === 0) {
+  console.warn(
+    '[seguridad] CORS_ORIGINS vacía: el front en internet no podrá llamar a la API. Ej: CORS_ORIGINS=https://tu-proyecto.vercel.app'
+  );
+}
+
+const corsOptions = {
+  origin(origin, callback) {
+    if (!origin) {
+      return callback(null, true);
+    }
+    if (corsAllowedOrigins.has(origin)) {
+      return callback(null, true);
+    }
+    console.warn(
+      `CORS rechazado: ${origin} — agregá el origen en CORS_ORIGINS, o en local con NODE_ENV=production usá CORS_ALLOW_LOCALHOST=1`
+    );
+    callback(null, false);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+};
 
 // Conexion a PostgreSQL
 
-
-console.log('Iniciando importación de rutas...');
 const productRoutes = require('./src/routes/productRoutes');
-console.log('productRoutes importado');
 const userRoutes = require('./src/routes/userRoutes');
-console.log('userRoutes importado');
 const produccionRoutes = require('./src/routes/produccionRoutes');
-console.log('produccionRoutes importado');
 const controlPesadoRoutes = require('./src/routes/controlPesadoRoutes');
-console.log('controlPesadoRoutes importado');
 const envasadoRoutes = require('./src/routes/envasadoRoutes');
-console.log('envasadoRoutes importado');
 const recepcionRoutes = require('./src/routes/recepcionRoutes');
-console.log('recepcionRoutes importado');
 const expendioRoutes = require('./src/routes/expendioRoutes');
-console.log('expendioRoutes importado');
+const materiaPrimaRoutes = require('./src/routes/materiaPrimaRoutes');
+const productoMateriaPrimaRoutes = require('./src/routes/productoMateriaPrimaRoutes');
+const authRoutes = require('./src/routes/authRoutes');
+const trazabilidadRoutes = require('./src/routes/trazabilidadRoutes');
+const semielaboradoRoutes = require('./src/routes/semielaboradoRoutes');
 
-console.log('Aplicando middlewares...');
-app.use(cors());
-app.use(express.json()); // Para parsear JSON
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+app.use(cors(corsOptions));
+app.use(express.json({ limit: '10mb' })); // Para parsear JSON con límite aumentado
+app.use(express.urlencoded({ extended: true, limit: '10mb' })); // Para parsear datos de formulario
 
-console.log('Registrando rutas principales...');
+app.get('/api/health', async (req, res) => {
+  try {
+    let dbOk = false;
+    try {
+      await pool.query('SELECT 1');
+      dbOk = true;
+    } catch {
+      dbOk = false;
+    }
+    if (isProd) {
+      return res.status(dbOk ? 200 : 503).json({ ok: dbOk });
+    }
+    return res.json({
+      ok: true,
+      database: dbOk ? 'connected' : 'error',
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    res.status(500).json({ ok: false });
+  }
+});
+
+if (!isProd) {
+  app.get('/api/db-test', async (req, res) => {
+    try {
+      const result = await pool.query('SELECT NOW() as current_time, version() as db_version');
+      res.json({
+        message: 'Conexión a base de datos exitosa',
+        current_time: result.rows[0].current_time,
+        db_version: result.rows[0].db_version,
+      });
+    } catch (err) {
+      res.status(500).json({
+        error: 'Error de conexión a la base de datos',
+        details: err.message,
+        code: err.code,
+      });
+    }
+  });
+
+  app.get('/api/test-tables', async (req, res) => {
+    try {
+      const productCheck = await pool.query(`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables
+          WHERE table_schema = 'public'
+          AND table_name = 'Product'
+        );
+      `);
+      const produccionCheck = await pool.query(`
+        SELECT column_name, data_type, is_nullable
+        FROM information_schema.columns
+        WHERE table_name = 'Produccion'
+        ORDER BY ordinal_position;
+      `);
+      const produccionSample = await pool.query('SELECT * FROM "Produccion" LIMIT 1');
+      let productCount = 0;
+      let produccionCount = 0;
+      if (productCheck.rows[0].exists) {
+        const productResult = await pool.query('SELECT COUNT(*) as count FROM "Product"');
+        productCount = parseInt(productResult.rows[0].count, 10);
+      }
+      const produccionCountResult = await pool.query('SELECT COUNT(*) as count FROM "Produccion"');
+      produccionCount = parseInt(produccionCountResult.rows[0].count, 10);
+      res.json({
+        message: 'Verificación de tablas completada',
+        tables: {
+          Product: { exists: productCheck.rows[0].exists, count: productCount },
+          Produccion: {
+            exists: true,
+            count: produccionCount,
+            columns: produccionCheck.rows,
+            sampleData: produccionSample.rows[0] || null,
+          },
+        },
+      });
+    } catch (err) {
+      res.status(500).json({ error: 'Error al verificar tablas', details: err.message });
+    }
+  });
+}
+
+app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/production', produccionRoutes);
@@ -39,9 +182,33 @@ app.use('/api/control-pesado', controlPesadoRoutes);
 app.use('/api/envasado', envasadoRoutes);
 app.use('/api/recepcion', recepcionRoutes);
 app.use('/api/expendio', expendioRoutes);
+app.use('/api/materia-prima', materiaPrimaRoutes);
+app.use('/api/producto-materia-prima', productoMateriaPrimaRoutes);
+app.use('/api/trazabilidad', trazabilidadRoutes);
+app.use('/api/semielaborado', semielaboradoRoutes);
 
-console.log('Intentando iniciar el servidor en el puerto', port);
+app.use((err, req, res, next) => {
+  if (process.env.NODE_ENV === 'development') {
+    console.error(err);
+  }
+  res.status(500).json({
+    error: 'Error interno del servidor',
+    message: process.env.NODE_ENV === 'development' ? err.message : undefined,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+  });
+});
+
+// Middleware para rutas no encontradas
+app.use('*', (req, res) => {
+  const body = { error: 'Ruta no encontrada' };
+  if (!isProd) {
+    body.path = req.originalUrl;
+    body.method = req.method;
+  }
+  res.status(404).json(body);
+});
+
 app.listen(port, () => {
-  console.log(`🚀 Servidor corriendo en http://localhost:${port}`);
+  console.log(`Servidor en http://localhost:${port}`);
 });
 

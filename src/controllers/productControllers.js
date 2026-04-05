@@ -1,13 +1,13 @@
-const { Product } = require('../models');
+const Product = require('../models/Product');
 
 // Obtener todos los productos
 exports.getAllProducts = async (req, res) => {
-  try {
-    const products = await Product.findAll();
-    res.json(products);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al obtener los productos' });
+  try {    const products = await Product.findForDropdown();    res.json(products);
+  } catch (err) {    res.status(500).json({ 
+      error: 'Error al obtener productos',
+      details: err.message,
+      code: err.code 
+    });
   }
 };
 
@@ -20,9 +20,7 @@ exports.getProductById = async (req, res) => {
       return res.status(404).json({ error: 'Producto no encontrado' });
     }
     res.json(product);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al obtener el producto' });
+  } catch (err) {    res.status(500).json({ error: 'Error al obtener el producto' });
   }
 };
 
@@ -32,9 +30,7 @@ exports.createProduct = async (req, res) => {
   try {
     const product = await Product.create({ name, description });
     res.status(201).json(product);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al crear el producto' });
+  } catch (err) {    res.status(500).json({ error: 'Error al crear el producto' });
   }
 };
 
@@ -52,9 +48,7 @@ exports.updateProduct = async (req, res) => {
       return res.status(404).json({ error: 'Producto no encontrado' });
     }
     res.json(product);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al actualizar el producto' });
+  } catch (err) {    res.status(500).json({ error: 'Error al actualizar el producto' });
   }
 };
 
@@ -67,9 +61,7 @@ exports.deleteProduct = async (req, res) => {
       return res.status(404).json({ error: 'Producto no encontrado' });
     }
     res.json({ message: 'Producto eliminado correctamente', product });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al eliminar el producto' });
+  } catch (err) {    res.status(500).json({ error: 'Error al eliminar el producto' });
   }
 };
 
@@ -79,9 +71,7 @@ exports.getProductsByName = async (req, res) => {
   try {
     const products = await Product.findByName(name);
     res.json(products);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al buscar productos' });
+  } catch (err) {    res.status(500).json({ error: 'Error al buscar productos' });
   }
 };
 
@@ -91,8 +81,6 @@ exports.getProductsByDescription = async (req, res) => {
   try {
     const products = await Product.findByDescription(description);
     res.json(products);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al buscar productos' });
+  } catch (err) {    res.status(500).json({ error: 'Error al buscar productos' });
   }
 };

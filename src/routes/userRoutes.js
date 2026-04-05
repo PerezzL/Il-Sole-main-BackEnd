@@ -1,12 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userControllers');
+const {
+  authenticateToken,
+  requireAdmin,
+  requireRole,
+  requireSelfOrAdmin,
+} = require('../middleware/auth');
 
-// Rutas para usuarios
-router.get('/', userController.getAllUsers);
-router.get('/:id', userController.getUserById);
-router.post('/', userController.createUser);
-router.put('/:id', userController.updateUser);
-router.delete('/:id', userController.deleteUser);
+router.post('/', authenticateToken, requireRole(['admin']), userController.createUser);
+router.get('/', authenticateToken, requireAdmin, userController.getAllUsers);
+router.get('/:id', authenticateToken, requireSelfOrAdmin, userController.getUserById);
+router.put('/:id', authenticateToken, requireRole(['admin']), userController.updateUser);
+router.delete('/:id', authenticateToken, requireAdmin, userController.deleteUser);
 
 module.exports = router;

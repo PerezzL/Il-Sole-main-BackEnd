@@ -1,13 +1,13 @@
-const { Recepcion } = require('../models');
+const Recepcion = require('../models/Recepcion');
 
 // Obtener todas las recepciones
 exports.getAllRecepciones = async (req, res) => {
-  try {
-    const recepciones = await Recepcion.findAll();
-    res.json(recepciones);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al obtener las recepciones' });
+  try {    const recepciones = await Recepcion.findAll();    res.json(recepciones);
+  } catch (err) {    res.status(500).json({ 
+      error: 'Error al obtener recepciones',
+      details: err.message,
+      code: err.code 
+    });
   }
 };
 
@@ -20,9 +20,7 @@ exports.getRecepcionById = async (req, res) => {
       return res.status(404).json({ error: 'Recepción no encontrada' });
     }
     res.json(recepcion);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al obtener la recepción' });
+  } catch (err) {    res.status(500).json({ error: 'Error al obtener la recepción' });
   }
 };
 
@@ -44,7 +42,10 @@ exports.createRecepcion = async (req, res) => {
   } = req.body;
   
   try {
-    const recepcionData = {
+    // Obtener información del usuario autenticado (viene del middleware authenticateToken)
+    const responsable = req.user?.username || req.user?.name || 'Usuario desconocido';
+    const usuario_id = req.user?.id;    
+    const nuevaRecepcion = await Recepcion.create({
       materiaPrima,
       control1,
       control2,
@@ -56,14 +57,12 @@ exports.createRecepcion = async (req, res) => {
       temp,
       fechaElaborado,
       fechaVTO,
-      lote
-    };
-    
-    const recepcion = await Recepcion.create(recepcionData);
-    res.status(201).json(recepcion);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al crear la recepción' });
+      lote,
+      responsable,
+      usuario_id
+    });    
+    res.status(201).json(nuevaRecepcion);
+  } catch (err) {    res.status(500).json({ error: 'Error al crear la recepción', details: err.message });
   }
 };
 
@@ -105,9 +104,7 @@ exports.updateRecepcion = async (req, res) => {
       return res.status(404).json({ error: 'Recepción no encontrada' });
     }
     res.json(recepcion);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al actualizar la recepción' });
+  } catch (err) {    res.status(500).json({ error: 'Error al actualizar la recepción' });
   }
 };
 
@@ -120,9 +117,7 @@ exports.deleteRecepcion = async (req, res) => {
       return res.status(404).json({ error: 'Recepción no encontrada' });
     }
     res.json({ message: 'Recepción eliminada correctamente', recepcion });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al eliminar la recepción' });
+  } catch (err) {    res.status(500).json({ error: 'Error al eliminar la recepción' });
   }
 };
 
@@ -132,9 +127,7 @@ exports.getRecepcionesByMateriaPrima = async (req, res) => {
   try {
     const recepciones = await Recepcion.findByMateriaPrima(materiaPrima);
     res.json(recepciones);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al buscar recepciones' });
+  } catch (err) {    res.status(500).json({ error: 'Error al buscar recepciones' });
   }
 };
 
@@ -144,9 +137,7 @@ exports.getRecepcionesByProveedor = async (req, res) => {
   try {
     const recepciones = await Recepcion.findByProveedor(proveedor);
     res.json(recepciones);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al buscar recepciones' });
+  } catch (err) {    res.status(500).json({ error: 'Error al buscar recepciones' });
   }
 };
 
@@ -156,9 +147,7 @@ exports.getRecepcionesByLote = async (req, res) => {
   try {
     const recepciones = await Recepcion.findByLote(lote);
     res.json(recepciones);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al buscar recepciones' });
+  } catch (err) {    res.status(500).json({ error: 'Error al buscar recepciones' });
   }
 };
 
@@ -171,9 +160,7 @@ exports.getRecepcionByNroRemito = async (req, res) => {
       return res.status(404).json({ error: 'Recepción no encontrada' });
     }
     res.json(recepcion);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al buscar la recepción' });
+  } catch (err) {    res.status(500).json({ error: 'Error al buscar la recepción' });
   }
 };
 
@@ -183,9 +170,7 @@ exports.getRecepcionesByFechaRange = async (req, res) => {
   try {
     const recepciones = await Recepcion.findByFechaRange(fechaInicio, fechaFin);
     res.json(recepciones);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al buscar recepciones' });
+  } catch (err) {    res.status(500).json({ error: 'Error al buscar recepciones' });
   }
 };
 
@@ -195,8 +180,40 @@ exports.getRecepcionesByFechaVTO = async (req, res) => {
   try {
     const recepciones = await Recepcion.findByFechaVTO(fechaVTO);
     res.json(recepciones);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al buscar recepciones' });
+  } catch (err) {    res.status(500).json({ error: 'Error al buscar recepciones' });
+  }
+};
+
+// Endpoint de prueba para verificar estructura de datos
+exports.testRecepcionStructure = async (req, res) => {
+  try {    
+    // Obtener una muestra de datos
+    const result = await pool.query('SELECT * FROM "Recepcion" LIMIT 1');
+    
+    if (result.rows.length === 0) {
+      return res.json({
+        message: 'No hay datos de recepción para probar',
+        structure: {
+          expectedFields: [
+            'id', 'materiaPrima', 'control1', 'control2', 'control3', 
+            'marca', 'proveedor', 'cant', 'nroRemito', 'temp', 
+            'fechaElaborado', 'fechaVTO', 'lote', 'created_at', 'updated_at'
+          ]
+        }
+      });
+    }
+    
+    const sampleData = result.rows[0];    
+    res.json({
+      message: 'Estructura de datos verificada',
+      sampleData: sampleData,
+      fieldTypes: {
+        materiaPrima: typeof sampleData.materiaPrima,
+        nroRemito: typeof sampleData.nroRemito,
+        fechaElaborado: typeof sampleData.fechaElaborado,
+        fechaVTO: typeof sampleData.fechaVTO
+      }
+    });
+  } catch (err) {    res.status(500).json({ error: 'Error al verificar estructura', details: err.message });
   }
 }; 

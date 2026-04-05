@@ -1,13 +1,13 @@
-const { Envasado } = require('../models');
+const Envasado = require('../models/Envasado');
 
 // Obtener todos los envasados
 exports.getAllEnvasados = async (req, res) => {
-  try {
-    const envasados = await Envasado.findAll();
+  try {    const envasados = await Envasado.findAll();    
+    // Log simple de confirmación
+    if (envasados.length > 0) {    }
+    
     res.json(envasados);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al obtener los envasados' });
+  } catch (err) {    res.status(500).json({ error: 'Error al obtener los envasados', details: err.message });
   }
 };
 
@@ -20,9 +20,7 @@ exports.getEnvasadoById = async (req, res) => {
       return res.status(404).json({ error: 'Envasado no encontrado' });
     }
     res.json(envasado);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al obtener el envasado' });
+  } catch (err) {    res.status(500).json({ error: 'Error al obtener el envasado' });
   }
 };
 
@@ -34,24 +32,29 @@ exports.createEnvasado = async (req, res) => {
     producto,
     cantEnvases,
     cantDescarte,
+    fechaIngresoPackaging,
+    fechaElaboracion,
     observaciones
   } = req.body;
   
   try {
-    const envasadoData = {
+    // Obtener información del usuario autenticado
+    const responsable = req.user?.username || req.user?.name || 'Usuario desconocido';
+    const usuario_id = req.user?.id;    
+    const envasado = await Envasado.create({
       loteProd,
       loteEnvasado,
       producto,
       cantEnvases,
       cantDescarte,
-      observaciones
-    };
-    
-    const envasado = await Envasado.create(envasadoData);
+      fechaIngresoPackaging,
+      fechaElaboracion,
+      observaciones,
+      responsable,
+      usuario_id
+    });    
     res.status(201).json(envasado);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al crear el envasado' });
+  } catch (err) {    res.status(500).json({ error: 'Error al crear el envasado', details: err.message });
   }
 };
 
@@ -64,6 +67,8 @@ exports.updateEnvasado = async (req, res) => {
     producto,
     cantEnvases,
     cantDescarte,
+    fechaIngresoPackaging,
+    fechaElaboracion,
     observaciones
   } = req.body;
   
@@ -74,6 +79,8 @@ exports.updateEnvasado = async (req, res) => {
     if (producto) envasadoData.producto = producto;
     if (cantEnvases) envasadoData.cantEnvases = cantEnvases;
     if (cantDescarte !== undefined) envasadoData.cantDescarte = cantDescarte;
+    if (fechaIngresoPackaging !== undefined) envasadoData.fechaIngresoPackaging = fechaIngresoPackaging;
+    if (fechaElaboracion !== undefined) envasadoData.fechaElaboracion = fechaElaboracion;
     if (observaciones !== undefined) envasadoData.observaciones = observaciones;
     
     const envasado = await Envasado.update(id, envasadoData);
@@ -81,9 +88,7 @@ exports.updateEnvasado = async (req, res) => {
       return res.status(404).json({ error: 'Envasado no encontrado' });
     }
     res.json(envasado);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al actualizar el envasado' });
+  } catch (err) {    res.status(500).json({ error: 'Error al actualizar el envasado' });
   }
 };
 
@@ -96,9 +101,7 @@ exports.deleteEnvasado = async (req, res) => {
       return res.status(404).json({ error: 'Envasado no encontrado' });
     }
     res.json({ message: 'Envasado eliminado correctamente', envasado });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al eliminar el envasado' });
+  } catch (err) {    res.status(500).json({ error: 'Error al eliminar el envasado' });
   }
 };
 
@@ -108,9 +111,7 @@ exports.getEnvasadosByProducto = async (req, res) => {
   try {
     const envasados = await Envasado.findByProducto(producto);
     res.json(envasados);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al buscar envasados' });
+  } catch (err) {    res.status(500).json({ error: 'Error al buscar envasados' });
   }
 };
 
@@ -120,9 +121,7 @@ exports.getEnvasadosByLoteProd = async (req, res) => {
   try {
     const envasados = await Envasado.findByLoteProd(loteProd);
     res.json(envasados);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al buscar envasados' });
+  } catch (err) {    res.status(500).json({ error: 'Error al buscar envasados' });
   }
 };
 
@@ -132,9 +131,7 @@ exports.getEnvasadosByLoteEnvasado = async (req, res) => {
   try {
     const envasados = await Envasado.findByLoteEnvasado(loteEnvasado);
     res.json(envasados);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al buscar envasados' });
+  } catch (err) {    res.status(500).json({ error: 'Error al buscar envasados' });
   }
 };
 
@@ -144,9 +141,7 @@ exports.getEnvasadosByCantEnvasesRange = async (req, res) => {
   try {
     const envasados = await Envasado.findByCantEnvasesRange(cantMin, cantMax);
     res.json(envasados);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al buscar envasados' });
+  } catch (err) {    res.status(500).json({ error: 'Error al buscar envasados' });
   }
 };
 
@@ -156,9 +151,7 @@ exports.getEnvasadosByCantDescarteRange = async (req, res) => {
   try {
     const envasados = await Envasado.findByCantDescarteRange(descarteMin, descarteMax);
     res.json(envasados);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al buscar envasados' });
+  } catch (err) {    res.status(500).json({ error: 'Error al buscar envasados' });
   }
 };
 
@@ -167,9 +160,7 @@ exports.getEstadisticasEnvasado = async (req, res) => {
   try {
     const estadisticas = await Envasado.getEstadisticasEnvasado();
     res.json(estadisticas);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al obtener estadísticas' });
+  } catch (err) {    res.status(500).json({ error: 'Error al obtener estadísticas' });
   }
 };
 
@@ -178,8 +169,6 @@ exports.getEnvasadosPorLote = async (req, res) => {
   try {
     const envasadosPorLote = await Envasado.getEnvasadosPorLote();
     res.json(envasadosPorLote);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al obtener envasados por lote' });
+  } catch (err) {    res.status(500).json({ error: 'Error al obtener envasados por lote' });
   }
 };

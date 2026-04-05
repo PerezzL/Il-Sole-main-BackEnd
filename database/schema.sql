@@ -44,11 +44,11 @@ CREATE TABLE IF NOT EXISTS "Recepcion" (
 CREATE TABLE IF NOT EXISTS "Produccion" (
     id SERIAL PRIMARY KEY,
     producto VARCHAR(100) NOT NULL,
-    materiaPrima VARCHAR(100) NOT NULL,
+    materiaprima VARCHAR(100) NOT NULL,
     lote VARCHAR(50) NOT NULL,
-    planProduccion DECIMAL(10,2),
+    planproduccion DECIMAL(10,2),
     produccion DECIMAL(10,2) NOT NULL,
-    pesoDescarte DECIMAL(10,2) DEFAULT 0,
+    pesodescarte DECIMAL(10,2) DEFAULT 0,
     observaciones TEXT,
     comentarios TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS "Envasado" (
 CREATE TABLE IF NOT EXISTS "ControlPesado" (
     id SERIAL PRIMARY KEY,
     producto VARCHAR(100) NOT NULL,
-    materiaPrima VARCHAR(100) NOT NULL,
+    materiaprima VARCHAR(100) NOT NULL,
     peso DECIMAL(10,2) NOT NULL,
     fecha DATE NOT NULL,
     observaciones TEXT,
@@ -86,11 +86,22 @@ CREATE TABLE IF NOT EXISTS "Expendio" (
     producto VARCHAR(100) NOT NULL,
     lote VARCHAR(50) NOT NULL,
     destino VARCHAR(100) NOT NULL,
-    tempTransporte DECIMAL(5,2),
-    LimpTransporte BOOLEAN DEFAULT true,
+    temptransporte DECIMAL(5,2),
+    limptransporte BOOLEAN DEFAULT true,
     responsable VARCHAR(100) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabla de relación Producto-Materia Prima
+CREATE TABLE IF NOT EXISTS "ProductoMateriaPrima" (
+    id SERIAL PRIMARY KEY,
+    producto_id INTEGER NOT NULL REFERENCES "Product"(id) ON DELETE CASCADE,
+    materia_prima_id INTEGER NOT NULL REFERENCES "MateriaPrima"(id) ON DELETE CASCADE,
+    activo BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(producto_id, materia_prima_id)
 );
 
 -- Índices para mejorar el rendimiento
@@ -109,13 +120,17 @@ CREATE INDEX IF NOT EXISTS idx_envasado_lote_envasado ON "Envasado"(loteEnvasado
 CREATE INDEX IF NOT EXISTS idx_envasado_producto ON "Envasado"(producto);
 
 CREATE INDEX IF NOT EXISTS idx_control_pesado_producto ON "ControlPesado"(producto);
-CREATE INDEX IF NOT EXISTS idx_control_pesado_materia_prima ON "ControlPesado"(materiaPrima);
+CREATE INDEX IF NOT EXISTS idx_control_pesado_materia_prima ON "ControlPesado"(materiaprima);
 CREATE INDEX IF NOT EXISTS idx_control_pesado_fecha ON "ControlPesado"(fecha);
 
 CREATE INDEX IF NOT EXISTS idx_expendio_producto ON "Expendio"(producto);
 CREATE INDEX IF NOT EXISTS idx_expendio_lote ON "Expendio"(lote);
 CREATE INDEX IF NOT EXISTS idx_expendio_destino ON "Expendio"(destino);
 CREATE INDEX IF NOT EXISTS idx_expendio_responsable ON "Expendio"(responsable);
+
+CREATE INDEX IF NOT EXISTS idx_producto_materia_prima_producto ON "ProductoMateriaPrima"(producto_id);
+CREATE INDEX IF NOT EXISTS idx_producto_materia_prima_materia ON "ProductoMateriaPrima"(materia_prima_id);
+CREATE INDEX IF NOT EXISTS idx_producto_materia_prima_activo ON "ProductoMateriaPrima"(activo);
 
 -- Triggers para actualizar updated_at automáticamente
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -133,13 +148,9 @@ CREATE TRIGGER update_produccion_updated_at BEFORE UPDATE ON "Produccion" FOR EA
 CREATE TRIGGER update_envasado_updated_at BEFORE UPDATE ON "Envasado" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_control_pesado_updated_at BEFORE UPDATE ON "ControlPesado" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_expendio_updated_at BEFORE UPDATE ON "Expendio" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_producto_materia_prima_updated_at BEFORE UPDATE ON "ProductoMateriaPrima" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Datos de ejemplo (opcional)
-INSERT INTO "User" (username, password, email, role) VALUES 
-('admin', 'admin123', 'admin@ilsole.com', 'admin'),
-('operador1', 'operador123', 'operador1@ilsole.com', 'user'),
-('supervisor', 'supervisor123', 'supervisor@ilsole.com', 'admin')
-ON CONFLICT (username) DO NOTHING;
+-- No se incluyen usuarios de prueba - usar solo usuarios existentes en la base de datos
 
 INSERT INTO "Product" (name, description) VALUES 
 ('Yogur Natural', 'Yogur natural sin azúcar'),
