@@ -11,7 +11,8 @@
     "start:backend": "cd BackEnd && npm start",
     "start:frontend": "cd FrontEnd && npm run preview",
     "test:connection": "cd BackEnd && npm run test-connection",
-    "setup:db": "cd BackEnd && npm run setup-db"
+    "setup:db": "cd BackEnd && npm run setup-db",
+    "db:reset-y-seed-catalogo": "cd BackEnd && npm run db:reset-y-seed-catalogo"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
@@ -25,5 +26,8 @@
     "food"
   ],
   "author": "Il-Sole Team",
-  "license": "MIT"
-} 
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^3.0.2"
+  }
+}
