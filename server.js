@@ -38,6 +38,12 @@ function getCorsAllowedOrigins() {
   if (localhostCorsEnabled()) {
     defaultDevOrigins.forEach((o) => set.add(o));
   }
+  if (process.env.VERCEL_URL) {
+    const host = String(process.env.VERCEL_URL).replace(/^https?:\/\//i, '').split('/')[0];
+    if (host) {
+      set.add(`https://${host}`);
+    }
+  }
   (process.env.CORS_ORIGINS || '')
     .split(',')
     .map((s) => s.trim())
@@ -208,7 +214,10 @@ app.use('*', (req, res) => {
   res.status(404).json(body);
 });
 
-app.listen(port, () => {
-  console.log(`Servidor en http://localhost:${port}`);
-});
+module.exports = { app };
 
+if (require.main === module && !process.env.VERCEL) {
+  app.listen(port, () => {
+    console.log(`Servidor en http://localhost:${port}`);
+  });
+}
