@@ -23,14 +23,11 @@ if (
   );
 }
 
-/** En serverless: timeouts cortos en la URI + pgbouncer para Supabase pooler */
+/** En serverless: timeouts en la URI (no agregamos pgbouncer=true: con node-pg a veces empeora o no aplica). */
 function resolveConnectionString(raw) {
   if (!onVercel) return raw;
   const extra = [];
-  if (!/connect_timeout=/i.test(raw)) extra.push('connect_timeout=8');
-  if (/pooler\.supabase\.com/i.test(raw) && !/pgbouncer=/i.test(raw)) {
-    extra.push('pgbouncer=true');
-  }
+  if (!/connect_timeout=/i.test(raw)) extra.push('connect_timeout=10');
   if (!/sslmode=/i.test(raw)) extra.push('sslmode=require');
   if (extra.length === 0) return raw;
   return raw + (raw.includes('?') ? '&' : '?') + extra.join('&');
@@ -44,7 +41,9 @@ const pool = onVercel
       ssl: getPgSslOptions(connectionStringResolved),
       max: 1,
       idleTimeoutMillis: 10_000,
-      connectionTimeoutMillis: 6_000,
+      connectionTimeoutMillis: 10_000,
+      keepAlive: true,
+      keepAliveInitialDelayMillis: 0,
     })
   : new Pool({
       connectionString,

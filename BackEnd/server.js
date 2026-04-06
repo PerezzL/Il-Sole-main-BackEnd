@@ -1,5 +1,13 @@
 // server.js
 require('dotenv').config();
+// Vercel + Supabase: a veces IPv6 queda colgado; IPv4 suele conectar al pooler.
+if (process.env.VERCEL) {
+  try {
+    require('dns').setDefaultResultOrder('ipv4first');
+  } catch (_) {
+    /* ignore */
+  }
+}
 const { getJwtSecret, isProd } = require('./src/config/secrets');
 getJwtSecret();
 
