@@ -6,24 +6,61 @@ const { getPgSslOptions } = require('./pgSsl');
 
 const onVercel = Boolean(process.env.VERCEL);
 
+function badConnectionString(c) {
+  return !c || /supa=base-pooler/i.test(c);
+}
+
 /**
- * Vercel + integración Supabase suele inyectar POSTGRES_*; el código histórico usa DATABASE_URL.
- * En serverless, Supabase recomienda el Transaction pooler (6543 / POSTGRES_PRISMA_URL) antes que sesión directa.
+ * Host db.PROJECT.supabase.co (puerto implícito 5432) desde Vercel suele colgar; hay que usar pooler.
+ */
+function isDirectSupabaseDbHost(url) {
+  if (!url || badConnectionString(url)) return false;
+  if (/pooler\.supabase\.com/i.test(url)) return false;
+  if (/:6543\b/.test(url)) return false;
+  return /db\.[^.]+\.supabase\.co\b/i.test(url);
+}
+
+/**
+ * Vercel: si DATABASE_URL es el host directo de Supabase y existen POSTGRES_*, usamos el pooler primero.
+ * Para forzar el host directo (no recomendado): ALLOW_DIRECT_SUPABASE_DB=1
  */
 function pickConnectionString() {
   const envTrim = (k) => String(process.env[k] || '').trim();
-  const ordered = onVercel
-    ? [
-        ['DATABASE_URL', envTrim('DATABASE_URL')],
-        ['POSTGRES_PRISMA_URL', envTrim('POSTGRES_PRISMA_URL')],
-        ['POSTGRES_URL_NON_POOLING', envTrim('POSTGRES_URL_NON_POOLING')],
-        ['POSTGRES_URL', envTrim('POSTGRES_URL')],
-      ]
-    : [['DATABASE_URL', envTrim('DATABASE_URL')]];
+  const forceDirect = /^1|true|yes$/i.test(envTrim('ALLOW_DIRECT_SUPABASE_DB'));
 
-  for (const [key, c] of ordered) {
-    if (!c || /supa=base-pooler/i.test(c)) continue;
-    return { url: c, source: key };
+  const dbUrl = envTrim('DATABASE_URL');
+  const poolerCandidates = [
+    ['POSTGRES_PRISMA_URL', envTrim('POSTGRES_PRISMA_URL')],
+    ['POSTGRES_URL_NON_POOLING', envTrim('POSTGRES_URL_NON_POOLING')],
+    ['POSTGRES_URL', envTrim('POSTGRES_URL')],
+  ];
+
+  if (!onVercel) {
+    if (!badConnectionString(dbUrl)) return { url: dbUrl, source: 'DATABASE_URL' };
+    return null;
+  }
+
+  const ordered = [];
+  const useDatabaseUrlFirst =
+    dbUrl &&
+    !badConnectionString(dbUrl) &&
+    (forceDirect || !isDirectSupabaseDbHost(dbUrl));
+
+  if (useDatabaseUrlFirst) {
+    ordered.push(['DATABASE_URL', dbUrl]);
+  }
+  for (const row of poolerCandidates) {
+    if (!badConnectionString(row[1])) ordered.push(row);
+  }
+  if (dbUrl && !badConnectionString(dbUrl) && !useDatabaseUrlFirst) {
+    ordered.push(['DATABASE_URL', dbUrl]);
+  }
+
+  const seen = new Set();
+  for (const [key, url] of ordered) {
+    if (seen.has(url)) continue;
+    seen.add(url);
+    return { url, source: key };
   }
   return null;
 }
@@ -40,26 +77,24 @@ const { url: connectionString, source: connectionSource } = picked;
 
 if (onVercel) {
   console.log(`[db] Origen de conexión: ${connectionSource}`);
-}
-
-if (
-  onVercel &&
-  /db\.\w+\.supabase\.co:5432/i.test(connectionString) &&
-  !/pooler\.supabase\.com/i.test(connectionString)
-) {
-  console.warn(
-    '[db] Estás usando host db.*.supabase.co:5432 en Vercel; suele colgar. Usá pooler (POSTGRES_URL_NON_POOLING / PRISMA) o cambiá DATABASE_URL.'
-  );
-}
-
-if (
-  onVercel &&
-  !/pooler\.supabase\.com/i.test(connectionString) &&
-  !/:6543\b/.test(connectionString)
-) {
-  console.warn(
-    '[db] En Vercel conviene pooler (*.pooler.supabase.com, 5432 session o 6543 transaction).'
-  );
+  const dbUrl = String(process.env.DATABASE_URL || '').trim();
+  if (
+    dbUrl &&
+    isDirectSupabaseDbHost(dbUrl) &&
+    connectionSource !== 'DATABASE_URL'
+  ) {
+    console.warn(
+      `[db] DATABASE_URL usa host directo db.*.supabase.co (colgaba en serverless); conectando vía ${connectionSource}. Opcional: reemplazá DATABASE_URL en Vercel por la URI del pooler.`
+    );
+  }
+  if (
+    isDirectSupabaseDbHost(connectionString) &&
+    !/^1|true|yes$/i.test(String(process.env.ALLOW_DIRECT_SUPABASE_DB || ''))
+  ) {
+    console.warn(
+      '[db] Seguís con host directo Supabase sin pooler; en Vercel suele dar 504. Agregá POSTGRES_PRISMA_URL (integración) o la URI Transaction pooler en DATABASE_URL.'
+    );
+  }
 }
 
 /** En serverless: timeouts en la URI (no agregamos pgbouncer=true: con node-pg a veces empeora o no aplica). */
