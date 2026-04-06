@@ -53,12 +53,11 @@ if (onVercel) {
 
   const sql = neon(connectionString, { fullResults: true });
 
-  // Wrapper que expone la misma interfaz pool.query(text, params) que usa todo el código.
   pool = {
     async query(text, params) {
       const start = Date.now();
       try {
-        const result = await sql(text, params || []);
+        const result = await sql.query(text, params || []);
         const ms = Date.now() - start;
         if (ms > 5000) console.warn(`[db] Query lenta (${ms}ms): ${text.substring(0, 80)}`);
         return result;
@@ -68,9 +67,8 @@ if (onVercel) {
       }
     },
     async connect() {
-      // Simulamos client con .query() y .release() para código que usa pool.connect()
       return {
-        query: (text, params) => sql(text, params || []),
+        query: (text, params) => sql.query(text, params || []),
         release: () => {},
       };
     },
