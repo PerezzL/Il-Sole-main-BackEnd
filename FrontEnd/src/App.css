@@ -1,0 +1,13 @@
+@media (max-width: 768px) {
+    /* estilos para pantallas pequeñas */
+    .container {
+       flex-direction: column;
+       padding: 10px;
+    }
+ }
+
+ img {
+    width: 100%;
+    height: auto;
+ }
+ 
