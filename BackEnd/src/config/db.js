@@ -4,22 +4,61 @@ require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env') });
 const { Pool } = require('pg');
 const { getPgSslOptions } = require('./pgSsl');
 
-const connectionString = process.env.DATABASE_URL;
+const onVercel = Boolean(process.env.VERCEL);
 
-if (!connectionString) {
+/**
+ * Vercel + integración Supabase suele inyectar POSTGRES_*; el código histórico usa DATABASE_URL.
+ * En serverless, Supabase recomienda el Transaction pooler (6543 / POSTGRES_PRISMA_URL) antes que sesión directa.
+ */
+function pickConnectionString() {
+  const envTrim = (k) => String(process.env[k] || '').trim();
+  const ordered = onVercel
+    ? [
+        ['DATABASE_URL', envTrim('DATABASE_URL')],
+        ['POSTGRES_PRISMA_URL', envTrim('POSTGRES_PRISMA_URL')],
+        ['POSTGRES_URL_NON_POOLING', envTrim('POSTGRES_URL_NON_POOLING')],
+        ['POSTGRES_URL', envTrim('POSTGRES_URL')],
+      ]
+    : [['DATABASE_URL', envTrim('DATABASE_URL')]];
+
+  for (const [key, c] of ordered) {
+    if (!c || /supa=base-pooler/i.test(c)) continue;
+    return { url: c, source: key };
+  }
+  return null;
+}
+
+const picked = pickConnectionString();
+
+if (!picked) {
   throw new Error(
-    'DATABASE_URL no está definida. Configurá la variable en BackEnd/.env (sin commitear secretos).'
+    'Falta URI de Postgres: definí DATABASE_URL o (en Vercel) POSTGRES_URL_NON_POOLING / POSTGRES_PRISMA_URL desde la integración Supabase.'
   );
 }
 
-const onVercel = Boolean(process.env.VERCEL);
+const { url: connectionString, source: connectionSource } = picked;
+
+if (onVercel) {
+  console.log(`[db] Origen de conexión: ${connectionSource}`);
+}
 
 if (
   onVercel &&
-  !/pooler\.supabase\.com|:6543\b/i.test(connectionString)
+  /db\.\w+\.supabase\.co:5432/i.test(connectionString) &&
+  !/pooler\.supabase\.com/i.test(connectionString)
 ) {
   console.warn(
-    '[db] En Vercel usá la URI del Transaction pooler de Supabase (puerto 6543 / host …pooler.supabase.com) en DATABASE_URL; la conexión directa suele colgar y da 504 a los 10s.'
+    '[db] Estás usando host db.*.supabase.co:5432 en Vercel; suele colgar. Usá pooler (POSTGRES_URL_NON_POOLING / PRISMA) o cambiá DATABASE_URL.'
+  );
+}
+
+if (
+  onVercel &&
+  !/pooler\.supabase\.com/i.test(connectionString) &&
+  !/:6543\b/.test(connectionString)
+) {
+  console.warn(
+    '[db] En Vercel conviene pooler (*.pooler.supabase.com, 5432 session o 6543 transaction).'
   );
 }
 
@@ -42,6 +81,8 @@ const pool = onVercel
       max: 1,
       idleTimeoutMillis: 10_000,
       connectionTimeoutMillis: 10_000,
+      // Evita que una consulta colgada consuma toda la lambda hasta el maxDuration (60s).
+      query_timeout: 12_000,
       keepAlive: true,
       keepAliveInitialDelayMillis: 0,
     })
