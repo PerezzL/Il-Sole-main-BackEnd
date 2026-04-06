@@ -67,6 +67,9 @@ exports.login = async (req, res) => {
       });
     }
     
+    if (process.env.VERCEL) {
+      console.error('[login] Error:', error.message, error.stack?.split('\n')[1]);
+    }
     res.status(500).json({ 
       error: 'Error interno del servidor',
       details: process.env.NODE_ENV === 'development' ? error.message : 'Error en el servidor'
