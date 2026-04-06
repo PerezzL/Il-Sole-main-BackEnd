@@ -75,28 +75,6 @@ if (!picked) {
 
 const { url: connectionString, source: connectionSource } = picked;
 
-if (onVercel) {
-  console.log(`[db] Origen de conexión: ${connectionSource}`);
-  const dbUrl = String(process.env.DATABASE_URL || '').trim();
-  if (
-    dbUrl &&
-    isDirectSupabaseDbHost(dbUrl) &&
-    connectionSource !== 'DATABASE_URL'
-  ) {
-    console.warn(
-      `[db] DATABASE_URL usa host directo db.*.supabase.co (colgaba en serverless); conectando vía ${connectionSource}. Opcional: reemplazá DATABASE_URL en Vercel por la URI del pooler.`
-    );
-  }
-  if (
-    isDirectSupabaseDbHost(connectionString) &&
-    !/^1|true|yes$/i.test(String(process.env.ALLOW_DIRECT_SUPABASE_DB || ''))
-  ) {
-    console.warn(
-      '[db] Seguís con host directo Supabase sin pooler; en Vercel suele dar 504. Agregá POSTGRES_PRISMA_URL (integración) o la URI Transaction pooler en DATABASE_URL.'
-    );
-  }
-}
-
 /** En serverless: timeouts en la URI (no agregamos pgbouncer=true: con node-pg a veces empeora o no aplica). */
 function resolveConnectionString(raw) {
   if (!onVercel) return raw;
@@ -108,6 +86,17 @@ function resolveConnectionString(raw) {
 }
 
 const connectionStringResolved = resolveConnectionString(connectionString);
+
+if (onVercel) {
+  try {
+    const u = new URL(connectionString.replace(/^postgresql:/i, 'http:'));
+    console.log(`[db] Origen: ${connectionSource} | host: ${u.hostname} | puerto: ${u.port || '5432'}`);
+  } catch {
+    console.log(`[db] Origen: ${connectionSource}`);
+  }
+  const sslCfg = getPgSslOptions(connectionStringResolved);
+  console.log(`[db] SSL config: ${JSON.stringify(sslCfg)}`);
+}
 
 const pool = onVercel
   ? new Pool({

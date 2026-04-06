@@ -43,6 +43,12 @@ function getPgSslOptions(connectionString) {
     return false;
   }
 
+  // Supabase pooler (*.pooler.supabase.com) necesita rejectUnauthorized: false
+  // porque el certificado del pooler no coincide con el hostname del proyecto.
+  if (/pooler\.supabase\.com/i.test(host) || /supabase/i.test(host)) {
+    return { rejectUnauthorized: false };
+  }
+
   return { rejectUnauthorized: true };
 }
 
