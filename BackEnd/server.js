@@ -9,7 +9,7 @@ const helmet = require('helmet');
 const pool = require('./src/config/db');
 
 const app = express();
-app.set('trust proxy', 1);
+app.set('trust proxy', true);
 const port = process.env.PORT || 5000;
 
 // CORS: con NODE_ENV distinto de production se permiten localhost (Vite, CRA, etc.).

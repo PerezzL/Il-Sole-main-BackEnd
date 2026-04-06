@@ -9,6 +9,8 @@ const loginLimiter = rateLimit({
   message: { error: 'Demasiados intentos de inicio de sesión. Probá más tarde.' },
   standardHeaders: true,
   legacyHeaders: false,
+  // Vercel/proxy: sin esto express-rate-limit puede tirar 500 al validar X-Forwarded-For / trust proxy
+  validate: { xForwardedForHeader: false, trustProxy: false },
 });
 
 router.post('/login', loginLimiter, authController.login);
