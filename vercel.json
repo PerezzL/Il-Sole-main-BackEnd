@@ -4,11 +4,11 @@
   "buildCommand": "cd FrontEnd && npm run build",
   "outputDirectory": "FrontEnd/dist",
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
   "functions": {
-    "api/index.js": {
+    "api/[...path].js": {
       "memory": 1024,
       "maxDuration": 10
     }
