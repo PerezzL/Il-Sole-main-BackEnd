@@ -10,12 +10,7 @@ function envTrim(k) {
 function cleanConnectionString(raw) {
   if (!raw) return raw;
   let cleaned = raw.replace(/[&?]supa=[^&]*/gi, '');
-  // En Vercel, forzar puerto 6543 (Transaction pooler) si es pooler Supabase con 5432
-  if (onVercel && /pooler\.supabase\.com/i.test(cleaned)) {
-    cleaned = cleaned.replace(/:5432\b/, ':6543');
-    // pgbouncer param no es necesario con @neondatabase/serverless
-    cleaned = cleaned.replace(/[&?]pgbouncer=[^&]*/gi, '');
-  }
+  cleaned = cleaned.replace(/[&?]pgbouncer=[^&]*/gi, '');
   return cleaned;
 }
 
@@ -40,41 +35,38 @@ const { url: connectionString, source: connectionSource } = picked;
 let pool;
 
 if (onVercel) {
-  // TCP y WebSocket al pooler de Supabase cuelgan desde Vercel.
-  // Usamos el modo HTTP de @neondatabase/serverless (sin conexión persistente).
-  const { neon } = require('@neondatabase/serverless');
+  // @neondatabase/serverless parchea net.Socket → WebSocket, haciendo que pg funcione
+  // sin TCP directo. Esto resuelve el cuelgue de TCP desde Vercel al pooler de Supabase.
+  const { Pool: NeonPool, neonConfig } = require('@neondatabase/serverless');
+  const ws = require('ws');
+  neonConfig.webSocketConstructor = ws;
+  neonConfig.useSecureWebSocket = true;
+  neonConfig.pipelineTLS = false;
+  neonConfig.pipelineConnect = false;
 
-  try {
-    const u = new URL(connectionString.replace(/^postgres(ql)?:/i, 'http:'));
-    console.log(`[db] Origen: ${connectionSource} | host: ${u.hostname} | puerto: ${u.port || '5432'} | driver: neon-http`);
-  } catch {
-    console.log(`[db] Origen: ${connectionSource} | driver: neon-http`);
+  // Usar puerto 5432 (Session pooler) para WebSocket — 6543 (Transaction) no soporta bien WS.
+  let connStr = connectionString;
+  if (/pooler\.supabase\.com/i.test(connStr)) {
+    connStr = connStr.replace(/:6543\b/, ':5432');
   }
 
-  const sql = neon(connectionString, { fullResults: true });
+  try {
+    const u = new URL(connStr.replace(/^postgres(ql)?:/i, 'http:'));
+    console.log(`[db] Origen: ${connectionSource} | host: ${u.hostname} | puerto: ${u.port || '5432'} | driver: neon-ws`);
+  } catch {
+    console.log(`[db] Origen: ${connectionSource} | driver: neon-ws`);
+  }
 
-  pool = {
-    async query(text, params) {
-      const start = Date.now();
-      try {
-        const result = await sql.query(text, params || []);
-        const ms = Date.now() - start;
-        if (ms > 5000) console.warn(`[db] Query lenta (${ms}ms): ${text.substring(0, 80)}`);
-        return result;
-      } catch (err) {
-        console.error(`[db] Query error (${Date.now() - start}ms):`, err.message);
-        throw err;
-      }
-    },
-    async connect() {
-      return {
-        query: (text, params) => sql.query(text, params || []),
-        release: () => {},
-      };
-    },
-    on() {},
-    end() {},
-  };
+  pool = new NeonPool({
+    connectionString: connStr,
+    ssl: { rejectUnauthorized: false },
+    max: 1,
+    idleTimeoutMillis: 10_000,
+    connectionTimeoutMillis: 15_000,
+  });
+
+  pool.on('connect', () => console.log('[db] Conexión WS OK'));
+  pool.on('error', (err) => console.error('[db] Pool error:', err.message));
 } else {
   const { Pool } = require('pg');
   const { getPgSslOptions } = require('./pgSsl');
