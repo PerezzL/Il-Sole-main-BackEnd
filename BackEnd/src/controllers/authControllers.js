@@ -9,25 +9,29 @@ const JWT_SECRET = getJwtSecret();
 exports.login = async (req, res) => {
   const { email, password } = req.body;
 
-  try {    // Validar que se proporcionen email y contraseña
+  try {
     if (!email || !password) {
       return res.status(400).json({ 
         error: 'Email y contraseña son requeridos' 
       });
     }
 
-    // Buscar el usuario por email    const user = await User.findByEmail(email);
+    const user = await User.findByEmail(email);
     
-    if (!user) {      return res.status(401).json({ 
+    if (!user) {
+      return res.status(401).json({ 
         error: 'Credenciales inválidas' 
       });
-    }    // Verificar la contraseña
+    }
+
     const isPasswordValid = await bcrypt.compare(password, user.password);
     
-    if (!isPasswordValid) {      return res.status(401).json({ 
+    if (!isPasswordValid) {
+      return res.status(401).json({ 
         error: 'Credenciales inválidas' 
       });
-    }    // Generar token JWT
+    }
+
     const token = jwt.sign(
       { 
         id: user.id, 
@@ -44,15 +48,14 @@ exports.login = async (req, res) => {
       username: user.username,
       email: user.email,
       role: user.role
-    };    
+    };
     res.json({
       message: 'Inicio de sesión exitoso',
       user: userData,
       token: token
     });
 
-  } catch (error) {    
-    // Manejar errores específicos de base de datos
+  } catch (error) {
     if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
       return res.status(503).json({ 
         error: 'Error de conexión a la base de datos',
@@ -111,7 +114,7 @@ exports.verifyAuth = async (req, res) => {
       },
       message: 'Token válido'
     });
-  } catch (error) {    
+  } catch (error) {
     if (error.name === 'JsonWebTokenError') {
       return res.status(401).json({ 
         error: 'Token inválido',
@@ -141,7 +144,8 @@ exports.logout = async (req, res) => {
       message: 'Sesión cerrada exitosamente',
       authenticated: false
     });
-  } catch (error) {    res.status(500).json({ 
+  } catch (error) {
+    res.status(500).json({ 
       error: 'Error interno del servidor' 
     });
   }
