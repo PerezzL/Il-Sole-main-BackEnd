@@ -23,10 +23,25 @@ if (
   );
 }
 
+/** En serverless: timeouts cortos en la URI + pgbouncer para Supabase pooler */
+function resolveConnectionString(raw) {
+  if (!onVercel) return raw;
+  const extra = [];
+  if (!/connect_timeout=/i.test(raw)) extra.push('connect_timeout=8');
+  if (/pooler\.supabase\.com/i.test(raw) && !/pgbouncer=/i.test(raw)) {
+    extra.push('pgbouncer=true');
+  }
+  if (!/sslmode=/i.test(raw)) extra.push('sslmode=require');
+  if (extra.length === 0) return raw;
+  return raw + (raw.includes('?') ? '&' : '?') + extra.join('&');
+}
+
+const connectionStringResolved = resolveConnectionString(connectionString);
+
 const pool = onVercel
   ? new Pool({
-      connectionString,
-      ssl: getPgSslOptions(connectionString),
+      connectionString: connectionStringResolved,
+      ssl: getPgSslOptions(connectionStringResolved),
       max: 1,
       idleTimeoutMillis: 10_000,
       connectionTimeoutMillis: 6_000,

@@ -60,19 +60,7 @@ if (isProd && corsAllowedOrigins.size === 0) {
   );
 }
 
-const corsOptions = {
-  origin(origin, callback) {
-    if (!origin) {
-      return callback(null, true);
-    }
-    if (corsAllowedOrigins.has(origin)) {
-      return callback(null, true);
-    }
-    console.warn(
-      `CORS rechazado: ${origin} — agregá el origen en CORS_ORIGINS, o en local con NODE_ENV=production usá CORS_ALLOW_LOCALHOST=1`
-    );
-    callback(null, false);
-  },
+const corsStatic = {
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
@@ -94,7 +82,32 @@ const trazabilidadRoutes = require('./src/routes/trazabilidadRoutes');
 const semielaboradoRoutes = require('./src/routes/semielaboradoRoutes');
 
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
-app.use(cors(corsOptions));
+app.use((req, res, next) => {
+  cors({
+    ...corsStatic,
+    origin(origin, callback) {
+      if (!origin) {
+        return callback(null, true);
+      }
+      if (corsAllowedOrigins.has(origin)) {
+        return callback(null, true);
+      }
+      const host = String(req.headers['x-forwarded-host'] || req.headers.host || '')
+        .split(',')[0]
+        .trim();
+      const proto = String(req.headers['x-forwarded-proto'] || 'https')
+        .split(',')[0]
+        .trim();
+      if (process.env.VERCEL && host && origin === `${proto}://${host}`) {
+        return callback(null, true);
+      }
+      console.warn(
+        `CORS rechazado: ${origin} — agregá en CORS_ORIGINS o usá el mismo dominio que el Host (${host}).`
+      );
+      return callback(null, false);
+    },
+  })(req, res, next);
+});
 app.use(express.json({ limit: '10mb' })); // Para parsear JSON con límite aumentado
 app.use(express.urlencoded({ extended: true, limit: '10mb' })); // Para parsear datos de formulario
 
