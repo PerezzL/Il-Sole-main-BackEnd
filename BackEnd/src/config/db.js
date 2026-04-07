@@ -21,16 +21,15 @@ function pickConnectionString() {
 
   for (const key of keys) {
     const val = cleanConnectionString(envTrim(key));
-    if (val) return { url: val, source: key };
+    if (val) return val;
   }
   return null;
 }
 
-const picked = pickConnectionString();
-if (!picked) {
+const connectionString = pickConnectionString();
+if (!connectionString) {
   throw new Error('Falta URI de Postgres (DATABASE_URL o POSTGRES_*).');
 }
-const { url: connectionString, source: connectionSource } = picked;
 
 let pool;
 
@@ -50,13 +49,6 @@ if (onVercel) {
     connStr = connStr.replace(/:6543\b/, ':5432');
   }
 
-  try {
-    const u = new URL(connStr.replace(/^postgres(ql)?:/i, 'http:'));
-    console.log(`[db] Origen: ${connectionSource} | host: ${u.hostname} | puerto: ${u.port || '5432'} | driver: neon-ws`);
-  } catch {
-    console.log(`[db] Origen: ${connectionSource} | driver: neon-ws`);
-  }
-
   pool = new NeonPool({
     connectionString: connStr,
     ssl: { rejectUnauthorized: false },
@@ -65,8 +57,8 @@ if (onVercel) {
     connectionTimeoutMillis: 15_000,
   });
 
-  pool.on('connect', () => console.log('[db] Conexión WS OK'));
-  pool.on('error', (err) => console.error('[db] Pool error:', err.message));
+  pool.on('connect', () => {});
+  pool.on('error', () => {});
 } else {
   const { Pool } = require('pg');
   const { getPgSslOptions } = require('./pgSsl');

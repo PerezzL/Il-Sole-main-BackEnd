@@ -89,18 +89,6 @@ const authRoutes = require('./src/routes/authRoutes');
 const trazabilidadRoutes = require('./src/routes/trazabilidadRoutes');
 const semielaboradoRoutes = require('./src/routes/semielaboradoRoutes');
 
-// Diagnóstico: loguear cada request entrante en Vercel
-if (process.env.VERCEL) {
-  app.use((req, res, next) => {
-    console.log(`[req] ${req.method} ${req.originalUrl} — inicio`);
-    const start = Date.now();
-    res.on('finish', () => {
-      console.log(`[req] ${req.method} ${req.originalUrl} — ${res.statusCode} (${Date.now() - start}ms)`);
-    });
-    next();
-  });
-}
-
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use((req, res, next) => {
   cors({

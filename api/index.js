@@ -7,12 +7,7 @@ const { app } = require('../BackEnd/server');
 
 module.exports = (req, res) => {
   // El rewrite /api/(.*) → /api hace que req.url sea "/" o "".
-  // El path original viene en headers de Vercel o en x-matched-path.
-  const originalPath = req.headers['x-matched-path']
-    || req.headers['x-forwarded-path']
-    || req.url;
-
-  // Si el path fue reescrito a /api (o /), restaurar desde el Referer o x-invoke-path
+  // Restauramos el path desde headers de Vercel (capture del rewrite).
   if (req.url === '/' || req.url === '') {
     const invokedPath = req.headers['x-invoke-path'] || '';
     const vercelPath = req.headers['x-now-route-matches'] || '';
@@ -33,6 +28,5 @@ module.exports = (req, res) => {
     }
   }
 
-  console.log(`[api] ${req.method} ${req.url}`);
   app(req, res);
 };
