@@ -35,14 +35,16 @@ const ProductoMateriaPrimaForm = ({ onSubmit, onCancel, formError }) => {
   const [showMultipleForm, setShowMultipleForm] = useState(false);
   const toast = useToast();
 
-  // Cargar materias primas disponibles
+  const fetchMateriasPrimas = async () => {
+    try {
+      const data = await getActiveMateriasPrimas();
+      setMateriasPrimasDisponibles(Array.isArray(data) ? data : []);
+    } catch (error) {
+      setMateriasPrimasDisponibles([]);
+    }
+  };
+
   useEffect(() => {
-    const fetchMateriasPrimas = async () => {
-      try {
-        const data = await getActiveMateriasPrimas();
-        setMateriasPrimasDisponibles(data);
-      } catch (error) {      }
-    };
     fetchMateriasPrimas();
   }, []);
 
@@ -62,7 +64,8 @@ const ProductoMateriaPrimaForm = ({ onSubmit, onCancel, formError }) => {
       materias_primas: [
         ...prev.materias_primas,
         {
-          nombre: ''
+          nombre: '',
+          esNueva: false
         }
       ]
     }));
@@ -80,6 +83,15 @@ const ProductoMateriaPrimaForm = ({ onSubmit, onCancel, formError }) => {
       ...prev,
       materias_primas: prev.materias_primas.map((mp, i) => 
         i === index ? { ...mp, [field]: value } : mp
+      )
+    }));
+  };
+
+  const setMateriaPrimaModoNueva = (index, esNueva) => {
+    setFormData(prev => ({
+      ...prev,
+      materias_primas: prev.materias_primas.map((mp, i) =>
+        i === index ? { ...mp, esNueva, nombre: '' } : mp
       )
     }));
   };
@@ -121,7 +133,8 @@ const ProductoMateriaPrimaForm = ({ onSubmit, onCancel, formError }) => {
         materias_primas: []
       });
       setShowMultipleForm(false);
-      
+      fetchMateriasPrimas();
+
       if (onSubmit) {
         const message = showMultipleForm 
           ? `Producto "${formData.producto.nombre}" creado con ${formData.materias_primas.length} materias primas`
@@ -255,16 +268,63 @@ const ProductoMateriaPrimaForm = ({ onSubmit, onCancel, formError }) => {
                   )}
                 </Flex>
 
-                                 <VStack spacing={3}>
-                   <FormControl isRequired>
-                     <FormLabel>Nombre de la Materia Prima</FormLabel>
-                     <Input
-                       value={materiaPrima.nombre}
-                       onChange={(e) => updateMateriaPrima(index, 'nombre', e.target.value)}
-                       placeholder="Ej: Leche, Frutilla, Azúcar"
-                     />
-                   </FormControl>
-                 </VStack>
+                <VStack spacing={3} align="stretch">
+                  <FormControl isRequired>
+                    <FormLabel>Materia prima</FormLabel>
+                    {!materiaPrima.esNueva ? (
+                      <HStack align="flex-start" spacing={2}>
+                        <Select
+                          flex={1}
+                          placeholder="Seleccionar de la lista…"
+                          value={materiaPrima.nombre}
+                          onChange={(e) =>
+                            updateMateriaPrima(index, 'nombre', e.target.value)
+                          }
+                        >
+                          {materiasPrimasDisponibles.map((mp) => (
+                            <option key={mp.id} value={mp.nombre}>
+                              {mp.nombre}
+                            </option>
+                          ))}
+                        </Select>
+                        <Button
+                          size="md"
+                          variant="outline"
+                          colorScheme="orange"
+                          whiteSpace="nowrap"
+                          onClick={() => setMateriaPrimaModoNueva(index, true)}
+                        >
+                          Nueva materia prima
+                        </Button>
+                      </HStack>
+                    ) : (
+                      <HStack align="flex-start" spacing={2}>
+                        <Input
+                          flex={1}
+                          value={materiaPrima.nombre}
+                          onChange={(e) =>
+                            updateMateriaPrima(index, 'nombre', e.target.value)
+                          }
+                          placeholder="Nombre de la nueva materia prima"
+                        />
+                        <Button
+                          size="md"
+                          variant="outline"
+                          onClick={() => setMateriaPrimaModoNueva(index, false)}
+                        >
+                          Elegir de la lista
+                        </Button>
+                      </HStack>
+                    )}
+                  </FormControl>
+                  {!materiaPrima.esNueva &&
+                    materiasPrimasDisponibles.length === 0 && (
+                      <Text fontSize="sm" color="gray.600">
+                        No hay materias primas en la base. Usá &quot;Nueva
+                        materia prima&quot; para cargar una.
+                      </Text>
+                    )}
+                </VStack>
               </Box>
             ))}
           </VStack>
