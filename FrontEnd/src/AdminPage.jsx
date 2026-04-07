@@ -227,11 +227,26 @@ const AdminPage = () => {
           Panel de Administración
         </Heading>
 
-        <Tabs variant="enclosed">
-          <TabList>
-            <Tab fontSize={{ base: 'sm', md: 'md' }}>Gestión de Usuarios</Tab>
-            <Tab fontSize={{ base: 'sm', md: 'md' }}>Gestión de Registros</Tab>
-            <Tab fontSize={{ base: 'sm', md: 'md' }}>Productos y Materias Primas</Tab>
+        <Tabs variant="enclosed" isLazy>
+          <TabList
+            flexWrap="nowrap"
+            overflowX="auto"
+            overflowY="hidden"
+            sx={{
+              WebkitOverflowScrolling: 'touch',
+              scrollbarWidth: 'thin',
+              '&::-webkit-scrollbar': { height: '6px' },
+            }}
+          >
+            <Tab flexShrink={0} whiteSpace="nowrap" fontSize={{ base: 'xs', sm: 'sm', md: 'md' }}>
+              Gestión de Usuarios
+            </Tab>
+            <Tab flexShrink={0} whiteSpace="nowrap" fontSize={{ base: 'xs', sm: 'sm', md: 'md' }}>
+              Gestión de Registros
+            </Tab>
+            <Tab flexShrink={0} whiteSpace="nowrap" fontSize={{ base: 'xs', sm: 'sm', md: 'md' }}>
+              Productos y Materias Primas
+            </Tab>
           </TabList>
 
           <TabPanels>
@@ -267,7 +282,8 @@ const AdminPage = () => {
                   <Select
                     value={sectorKey}
                     onChange={(e) => setSectorKey(e.target.value)}
-                    maxW="300px"
+                    w="100%"
+                    maxW={{ base: '100%', sm: '320px' }}
                     bg="white"
                   >
                     {sectores.map(s => (

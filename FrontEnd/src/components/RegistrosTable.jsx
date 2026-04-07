@@ -429,7 +429,7 @@ const RegistrosTable = ({ sector, columns, filtros, showFilters = true }) => {
             </Text>
             <Box 
               display="grid" 
-              gridTemplateColumns="repeat(auto-fit, minmax(200px, 1fr))" 
+              gridTemplateColumns={{ base: '1fr', sm: 'repeat(auto-fit, minmax(160px, 1fr))' }}
               gap={3}
             >
               {filtros.map(filtro => {
@@ -463,7 +463,7 @@ const RegistrosTable = ({ sector, columns, filtros, showFilters = true }) => {
             </Text>
             
             {/* Selector de tipo de filtro */}
-            <HStack spacing={2} mb={2}>
+            <HStack spacing={2} mb={2} flexWrap="wrap">
               <Button
                 size="xs"
                 variant={tipoFiltroFecha === 'especifica' ? 'solid' : 'outline'}
@@ -641,7 +641,7 @@ const RegistrosTable = ({ sector, columns, filtros, showFilters = true }) => {
           </Box>
 
           {/* Botones de acción */}
-          <HStack spacing={2} justify="flex-end">
+          <HStack spacing={2} justify="flex-end" flexWrap="wrap" w="full">
             <Button
               leftIcon={<SearchIcon />}
               colorScheme="orange"
@@ -678,8 +678,15 @@ const RegistrosTable = ({ sector, columns, filtros, showFilters = true }) => {
       </Box>
 
       {/* Tabla */}
-      <Box overflowX="auto" border="1px" borderColor="gray.200" borderRadius="md">
-        <Table variant="simple" size="sm">
+      <Box
+        overflowX="auto"
+        border="1px"
+        borderColor="gray.200"
+        borderRadius="md"
+        sx={{ WebkitOverflowScrolling: 'touch' }}
+        className="chakra-table__scroll"
+      >
+        <Table variant="simple" size="sm" minW="720px" sx={{ tableLayout: 'auto' }}>
           <Thead bg="orange.100">
             <Tr>
               {columns.map(column => (

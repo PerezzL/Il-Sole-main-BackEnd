@@ -10,7 +10,6 @@ import {
   MenuItem, 
   MenuDivider,
   Avatar,
-  IconButton
 } from '@chakra-ui/react';
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -67,8 +66,23 @@ const Header = () => {
               </Link>
             </Box>
 
-            {/* Espacio izquierdo para balance */}
-            <Box flex="1" />
+            {/* En móvil: enlace a inicio (el logo centrado puede quedar lejos del pulgar) */}
+            <Box flex="1" display="flex" justifyContent="flex-start" alignItems="center" minW={0} zIndex={2}>
+              <Link to="/home">
+                <Text
+                  color="white"
+                  fontSize="sm"
+                  fontWeight="semibold"
+                  display={{ base: 'inline-block', md: 'none' }}
+                  px={2}
+                  py={1}
+                  borderRadius="md"
+                  _hover={{ bg: 'whiteAlpha.200' }}
+                >
+                  Inicio
+                </Text>
+              </Link>
+            </Box>
 
             {/* Menú de usuario o botón de login - SIEMPRE a la derecha */}
             <Box flex="1" display="flex" justifyContent="flex-end">

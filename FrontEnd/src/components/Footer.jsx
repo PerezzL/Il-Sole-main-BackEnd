@@ -10,7 +10,10 @@ const Footer = () => {
           p={{ base: 3, md: 4 }} 
           justifyContent="space-between" 
           alignItems="center"
-          minH={{ base: '60px', md: '80px' }}
+          direction={{ base: 'column', sm: 'row' }}
+          gap={{ base: 2, sm: 0 }}
+          textAlign={{ base: 'center', sm: 'left' }}
+          minH={{ base: 'auto', md: '80px' }}
         >
             {/* Logo a la izquierda */}
             <Flex alignItems="center" gap={3}>
@@ -37,11 +40,10 @@ const Footer = () => {
             <Text 
                 color="white" 
                 fontSize={{ base: 'xs', md: 'sm' }}
-                opacity="0.8"
-                textAlign="right"
-                display={{ base: 'none', md: 'block' }}
+                opacity="0.85"
+                textAlign={{ base: 'center', sm: 'right' }}
             >
-                © 2024 Il Sole. Todos los derechos reservados.
+                © 2024 Il Sole
             </Text>
         </Flex>
     </Box>

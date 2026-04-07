@@ -96,22 +96,27 @@ const SignIn = () => {
   return (
     <>
     <Box
-      minH="100vh"
+      minH={{ base: '100dvh', md: '100vh' }}
       display="flex"
       justifyContent="center"
       alignItems="center"
+      px={{ base: 4, md: 6 }}
+      py={{ base: 6, md: 8 }}
       backgroundImage={`url(${backgroundImg})`}
+      backgroundSize="cover"
+      backgroundPosition="center"
     >
       <Box
         bg="white"
-        p={8}
+        p={{ base: 6, md: 8 }}
         rounded="lg"
         shadow="2xl"
-        w="sm"
+        w="full"
+        maxW="400px"
         transform="scale(1)"
         transition="transform 0.3s"
       >
-        <Heading as="h2" size="xl" mb={6} textAlign="center" color="gray.800">
+        <Heading as="h2" size={{ base: 'lg', md: 'xl' }} mb={6} textAlign="center" color="gray.800">
           Bienvenido
         </Heading>
         <form onSubmit={handleSubmit}>

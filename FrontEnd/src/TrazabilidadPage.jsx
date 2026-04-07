@@ -107,11 +107,11 @@ const TrazabilidadPage = () => {
         px={4}
         bg="gray.100"
       >
-        <Container maxW="1400px">
+        <Container maxW="1400px" px={{ base: 2, sm: 4 }}>
           {/* BUSCADOR */}
           <Box
             bg="white"
-            p={6}
+            p={{ base: 4, md: 6 }}
             borderRadius="2xl"
             boxShadow="xl"
             mb={6}
@@ -164,7 +164,12 @@ const TrazabilidadPage = () => {
                   </InputGroup>
                 </FormControl>
 
-                <HStack spacing={3}>
+                <HStack
+                  spacing={3}
+                  w="100%"
+                  justify={{ base: 'stretch', sm: 'flex-start' }}
+                  flexDir={{ base: 'column', sm: 'row' }}
+                >
                   <Button
                     colorScheme="orange"
                     size="lg"
@@ -172,7 +177,8 @@ const TrazabilidadPage = () => {
                     isLoading={loading}
                     loadingText="Buscando..."
                     leftIcon={<SearchIcon />}
-                    px={8}
+                    px={{ base: 6, md: 8 }}
+                    w={{ base: 'full', sm: 'auto' }}
                     borderRadius="xl"
                     boxShadow="md"
                     _hover={{ transform: 'translateY(-2px)', boxShadow: 'lg' }}
@@ -187,6 +193,7 @@ const TrazabilidadPage = () => {
                       colorScheme="gray"
                       size="lg"
                       onClick={handleLimpiar}
+                      w={{ base: 'full', sm: 'auto' }}
                       borderRadius="xl"
                     >
                       Limpiar

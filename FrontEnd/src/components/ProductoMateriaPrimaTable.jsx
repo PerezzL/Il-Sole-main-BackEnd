@@ -20,6 +20,7 @@ import {
   Badge,
   VStack,
   HStack,
+  SimpleGrid,
   Text,
   Heading,
   Flex,
@@ -183,7 +184,7 @@ const ProductoMateriaPrimaTable = ({ refreshKey = 0, showFilters = true }) => {
       {showFilters && (
       <Box mb={6} p={4} bg="gray.50" borderRadius="md">
         <Heading size="sm" mb={3}>Filtros</Heading>
-        <HStack spacing={4}>
+        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
           <FormControl>
             <FormLabel fontSize="sm">Producto</FormLabel>
             <Input
@@ -202,13 +203,13 @@ const ProductoMateriaPrimaTable = ({ refreshKey = 0, showFilters = true }) => {
               size="sm"
             />
           </FormControl>
-        </HStack>
+        </SimpleGrid>
       </Box>
       )}
 
       {/* Tabla */}
-      <Box overflowX="auto">
-        <Table variant="simple" size="sm">
+      <Box overflowX="auto" sx={{ WebkitOverflowScrolling: 'touch' }}>
+        <Table variant="simple" size="sm" minW="480px">
           <Thead>
             <Tr>
               <Th>Producto</Th>
