@@ -1,12 +1,34 @@
 import { extendTheme } from '@chakra-ui/react';
 
-/** Tema con ajustes responsive y accesibilidad táctil */
+const colors = {
+  brand: {
+    plum: '#660033',
+    plumDark: '#4A0024',
+    plumMuted: '#8B3D5C',
+    orange: '#DE8F18',
+    orangeHover: '#BF6F15',
+    orangeSoft: '#E8A84A',
+    cream: '#FAF6F0',
+    creamDeep: '#F0E8DC',
+    sand: '#C9A66B',
+    whiteAlpha: 'rgba(255,255,255,0.12)',
+  },
+};
+
+/** Tema Il Sole: paleta original + tipografía y tokens para UI moderna */
 export const theme = extendTheme({
+  colors,
+  fonts: {
+    heading: '"Fraunces", Georgia, "Times New Roman", serif',
+    body: '"Plus Jakarta Sans", system-ui, -apple-system, sans-serif',
+  },
   styles: {
     global: {
       'html, body': {
         overflowX: 'hidden',
         WebkitTextSizeAdjust: '100%',
+        bg: 'brand.cream',
+        color: 'brand.plum',
       },
       '#root': {
         minHeight: '100%',
@@ -18,7 +40,7 @@ export const theme = extendTheme({
     Button: {
       baseStyle: {
         _focusVisible: {
-          boxShadow: 'outline',
+          boxShadow: '0 0 0 3px rgba(102, 0, 51, 0.35)',
         },
       },
     },

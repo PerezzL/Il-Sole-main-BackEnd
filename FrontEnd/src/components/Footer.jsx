@@ -6,14 +6,17 @@ const Footer = () => {
   return (
     <Box w="full">
         <Flex 
-          bg="#660033" 
-          p={{ base: 3, md: 4 }} 
+          bg="brand.plum" 
+          p={{ base: 4, md: 5 }} 
           justifyContent="space-between" 
           alignItems="center"
           direction={{ base: 'column', sm: 'row' }}
           gap={{ base: 2, sm: 0 }}
           textAlign={{ base: 'center', sm: 'left' }}
           minH={{ base: 'auto', md: '80px' }}
+          borderTop="1px solid"
+          borderColor="whiteAlpha.200"
+          boxShadow="0 -8px 32px rgba(0,0,0,0.08)"
         >
             {/* Logo a la izquierda */}
             <Flex alignItems="center" gap={3}>
@@ -43,7 +46,7 @@ const Footer = () => {
                 opacity="0.85"
                 textAlign={{ base: 'center', sm: 'right' }}
             >
-                © 2024 Il Sole
+                © {new Date().getFullYear()} Il Sole
             </Text>
         </Flex>
     </Box>

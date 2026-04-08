@@ -37,13 +37,16 @@ const Header = () => {
   return (
     <Box w="full">
         <Flex 
-          bg="#660033" 
+          bg="brand.plum" 
           p={{ base: '8px', sm: 3, md: '1.5%' }} 
           alignItems="center" 
           justifyContent="space-between" 
           flexDirection={{ base: 'row', md: 'row' }}
           position="relative"
           minH={{ base: '60px', md: 'auto' }}
+          boxShadow="0 4px 24px rgba(0,0,0,0.12)"
+          borderBottom="1px solid"
+          borderColor="whiteAlpha.200"
         >
             {/* Logo centrado */}
             <Box 
@@ -95,8 +98,9 @@ const Header = () => {
                     color="white"
                     _hover={{ backgroundColor: "rgba(255,255,255,0.1)" }}
                     _active={{ backgroundColor: "rgba(255,255,255,0.2)" }}
-                    border="1px solid rgba(255,255,255,0.2)"
-                    borderRadius="lg"
+                    border="1px solid"
+                    borderColor="whiteAlpha.300"
+                    borderRadius="xl"
                     px={{ base: 2, md: 4 }}
                     py={2}
                     h="auto"
@@ -106,7 +110,7 @@ const Header = () => {
                       <Avatar 
                         size="sm" 
                         name={user?.name || user?.email?.split('@')[0]} 
-                        bg="#DE8F18"
+                        bg="brand.orange"
                         color="white"
                       />
                       {/* Ocultar nombre en móviles */}
@@ -118,7 +122,7 @@ const Header = () => {
                       </Text>
                     </Flex>
                   </MenuButton>
-                  <MenuList bg="white" border="1px solid" borderColor="gray.200" boxShadow="xl" borderRadius="md" minW="200px">
+                  <MenuList bg="white" border="1px solid" borderColor="gray.200" boxShadow="0 16px 48px rgba(102,0,51,0.12)" borderRadius="xl" minW="200px" py={1}>
                     <Box px={4} py={3} borderBottom="1px solid" borderColor="gray.100">
                       <Text fontWeight="bold" fontSize="sm" color="gray.800" mb={1}>
                         {user?.name || user?.email?.split('@')[0]}
@@ -143,9 +147,10 @@ const Header = () => {
               ) : (
                 <Link to='/login'>
                   <Button 
-                    backgroundColor="#DE8F18" 
+                    bg="brand.orange" 
                     color="white" 
-                    _hover={{ backgroundColor: "#BF6F15" }} 
+                    borderRadius="xl"
+                    _hover={{ bg: 'brand.orangeHover' }} 
                     w={{ base: 'auto', md: 'auto' }} 
                     fontSize={{ base: 'sm', md: 'md' }}
                     size={{ base: 'sm', md: 'md' }}
