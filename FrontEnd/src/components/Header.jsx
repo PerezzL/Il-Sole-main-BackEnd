@@ -35,7 +35,13 @@ const Header = () => {
   };
 
   return (
-    <Box w="full">
+    <Box
+      w="full"
+      position="sticky"
+      top={0}
+      zIndex="sticky"
+      bg="brand.plum"
+    >
         <Flex 
           bg="brand.plum" 
           p={{ base: '8px', sm: 3, md: '1.5%' }} 
