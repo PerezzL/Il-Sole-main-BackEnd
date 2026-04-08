@@ -36,10 +36,11 @@ const Header = () => {
 
   return (
     <Box
+      as="header"
       w="full"
       position="sticky"
       top={0}
-      zIndex="sticky"
+      zIndex="banner"
       bg="brand.plum"
     >
         <Flex 

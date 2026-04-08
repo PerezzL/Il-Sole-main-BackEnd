@@ -24,15 +24,16 @@ export const theme = extendTheme({
   },
   styles: {
     global: {
+      /* clip evita scroll horizontal sin romper position:sticky (hidden sí lo rompe) */
       'html, body': {
-        overflowX: 'hidden',
+        overflowX: 'clip',
         WebkitTextSizeAdjust: '100%',
         bg: 'brand.cream',
         color: 'brand.plum',
       },
       '#root': {
         minHeight: '100%',
-        overflowX: 'hidden',
+        overflowX: 'clip',
       },
     },
   },
