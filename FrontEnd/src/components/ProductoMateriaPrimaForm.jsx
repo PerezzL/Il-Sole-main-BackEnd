@@ -22,12 +22,14 @@ import {
 import { AddIcon, CloseIcon } from '@chakra-ui/icons';
 import { createMultipleProductoMateriaPrima, getActiveMateriasPrimas } from '../config/api';
 
+const nuevaFilaMateriaPrima = () => ({ nombre: '', esNueva: false });
+
 const ProductoMateriaPrimaForm = ({ onSubmit, onCancel, formError }) => {
   const [formData, setFormData] = useState({
     producto: {
       nombre: ''
     },
-    materias_primas: []
+    materias_primas: [nuevaFilaMateriaPrima()]
   });
   
   const [materiasPrimasDisponibles, setMateriasPrimasDisponibles] = useState([]);
@@ -115,7 +117,7 @@ const ProductoMateriaPrimaForm = ({ onSubmit, onCancel, formError }) => {
 
       setFormData({
         producto: { nombre: '' },
-        materias_primas: []
+        materias_primas: [nuevaFilaMateriaPrima()]
       });
       fetchMateriasPrimas();
 
@@ -181,19 +183,6 @@ const ProductoMateriaPrimaForm = ({ onSubmit, onCancel, formError }) => {
             Materias primas
           </Heading>
 
-          {formData.materias_primas.length === 0 && (
-            <Button
-              size="sm"
-              leftIcon={<AddIcon />}
-              onClick={addMateriaPrima}
-              colorScheme="green"
-              variant="outline"
-              w="full"
-            >
-              Agregar materia prima
-            </Button>
-          )}
-
           <VStack spacing={4} align="stretch">
             {formData.materias_primas.map((materiaPrima, index) => (
               <Box
@@ -206,14 +195,16 @@ const ProductoMateriaPrimaForm = ({ onSubmit, onCancel, formError }) => {
               >
                 <Flex justify="space-between" align="center" mb={3}>
                   <Badge colorScheme="blue">Materia prima {index + 1}</Badge>
-                  <IconButton
-                    size="sm"
-                    icon={<CloseIcon />}
-                    onClick={() => removeMateriaPrima(index)}
-                    colorScheme="red"
-                    variant="ghost"
-                    aria-label="Eliminar materia prima"
-                  />
+                  {formData.materias_primas.length > 1 && (
+                    <IconButton
+                      size="sm"
+                      icon={<CloseIcon />}
+                      onClick={() => removeMateriaPrima(index)}
+                      colorScheme="red"
+                      variant="ghost"
+                      aria-label="Eliminar materia prima"
+                    />
+                  )}
                 </Flex>
 
                 <VStack spacing={3} align="stretch">
@@ -306,7 +297,10 @@ const ProductoMateriaPrimaForm = ({ onSubmit, onCancel, formError }) => {
             colorScheme="orange"
             isLoading={loading}
             loadingText="Creando..."
-            isDisabled={!formData.producto.nombre || formData.materias_primas.length === 0}
+            isDisabled={
+              !formData.producto.nombre?.trim() ||
+              !formData.materias_primas.some((mp) => mp.nombre?.trim())
+            }
           >
             Crear producto
           </Button>

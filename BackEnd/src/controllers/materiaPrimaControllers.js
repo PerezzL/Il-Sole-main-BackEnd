@@ -1,6 +1,7 @@
 const pool = require('../config/db');
+const MateriaPrima = require('../models/MateriaPrima');
 
-// Controlador de Materia Prima - Usa tabla Product como alternativa
+// Controlador de Materia Prima - listados activos usan tabla "MateriaPrima"
 
 // Obtener todas las materias primas
 exports.getAllMateriasPrimas = async (req, res) => {
@@ -10,10 +11,12 @@ exports.getAllMateriasPrimas = async (req, res) => {
   }
 };
 
-// Obtener solo las materias primas activas (para dropdowns)
+// Solo materias primas activas (tabla MateriaPrima), para dropdowns del front
 exports.getActiveMateriasPrimas = async (req, res) => {
-  try {    const result = await pool.query('SELECT id, name as nombre FROM "Product" ORDER BY name');    res.json(result.rows);
-  } catch (err) {    // En lugar de error 500, retornar array vacío
+  try {
+    const rows = await MateriaPrima.findActive();
+    res.json(rows);
+  } catch (err) {
     res.json([]);
   }
 };
