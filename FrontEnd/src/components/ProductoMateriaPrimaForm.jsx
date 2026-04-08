@@ -20,7 +20,7 @@ import {
   AlertIcon
 } from '@chakra-ui/react';
 import { AddIcon, CloseIcon } from '@chakra-ui/icons';
-import { createProductoMateriaPrima, createMultipleProductoMateriaPrima, getActiveMateriasPrimas } from '../config/api';
+import { createMultipleProductoMateriaPrima, getActiveMateriasPrimas } from '../config/api';
 
 const ProductoMateriaPrimaForm = ({ onSubmit, onCancel, formError }) => {
   const [formData, setFormData] = useState({
@@ -32,7 +32,6 @@ const ProductoMateriaPrimaForm = ({ onSubmit, onCancel, formError }) => {
   
   const [materiasPrimasDisponibles, setMateriasPrimasDisponibles] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [showMultipleForm, setShowMultipleForm] = useState(false);
   const toast = useToast();
 
   const fetchMateriasPrimas = async () => {
@@ -101,45 +100,29 @@ const ProductoMateriaPrimaForm = ({ onSubmit, onCancel, formError }) => {
     setLoading(true);
 
     try {
-      if (showMultipleForm) {
-        // Crear múltiples relaciones
-        await createMultipleProductoMateriaPrima(formData);
-        toast({
-          title: 'Producto creado exitosamente',
-          description: `Producto "${formData.producto.nombre}" creado con ${formData.materias_primas.length} materias primas`,
-          status: 'success',
-          duration: 5000,
-          isClosable: true,
-        });
-      } else {
-        // Crear relación individual
-        const materiaPrima = formData.materias_primas[0];
-        await createProductoMateriaPrima({
-          producto_nombre: formData.producto.nombre,
-          materia_prima_nombre: materiaPrima.nombre
-        });
-        toast({
-          title: 'Relación creada exitosamente',
-          description: `Producto "${formData.producto.nombre}" vinculado con "${materiaPrima.nombre}"`,
-          status: 'success',
-          duration: 5000,
-          isClosable: true,
-        });
-      }
+      await createMultipleProductoMateriaPrima(formData);
+      const n = formData.materias_primas.length;
+      toast({
+        title: 'Producto creado exitosamente',
+        description:
+          n === 1
+            ? `Producto "${formData.producto.nombre}" vinculado con 1 materia prima`
+            : `Producto "${formData.producto.nombre}" creado con ${n} materias primas`,
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      });
 
-      // Limpiar formulario
       setFormData({
         producto: { nombre: '' },
         materias_primas: []
       });
-      setShowMultipleForm(false);
       fetchMateriasPrimas();
 
       if (onSubmit) {
-        const message = showMultipleForm 
-          ? `Producto "${formData.producto.nombre}" creado con ${formData.materias_primas.length} materias primas`
-          : `Producto "${formData.producto.nombre}" vinculado con "${formData.materias_primas[0].nombre}"`;
-        onSubmit(message);
+        onSubmit(
+          `Producto "${formData.producto.nombre}" con ${n} materia${n === 1 ? '' : 's'} prima${n === 1 ? '' : 's'}`
+        );
       }
     } catch (error) {
       toast({
@@ -151,13 +134,6 @@ const ProductoMateriaPrimaForm = ({ onSubmit, onCancel, formError }) => {
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const toggleFormMode = () => {
-    setShowMultipleForm(!showMultipleForm);
-    if (!showMultipleForm && formData.materias_primas.length === 0) {
-      addMateriaPrima();
     }
   };
 
@@ -175,7 +151,7 @@ const ProductoMateriaPrimaForm = ({ onSubmit, onCancel, formError }) => {
     >
       <VStack spacing={6} align="stretch">
         <Heading size="md" color="orange.600">
-          {showMultipleForm ? 'Crear Producto con Múltiples Materias Primas' : 'Crear Relación Producto-Materia Prima'}
+          Crear producto y materias primas
         </Heading>
 
         {formError && (
@@ -200,38 +176,12 @@ const ProductoMateriaPrimaForm = ({ onSubmit, onCancel, formError }) => {
 
         <Divider />
 
-        {/* Selector de modo */}
         <Box>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={toggleFormMode}
-            colorScheme="orange"
-          >
-            {showMultipleForm ? 'Modo Simple (1 materia prima)' : 'Modo Múltiple (varias materias primas)'}
-          </Button>
-        </Box>
+          <Heading size="sm" mb={3} color="gray.700">
+            Materias primas
+          </Heading>
 
-        {/* Materias Primas */}
-        <Box>
-          <Flex justify="space-between" align="center" mb={3}>
-            <Heading size="sm" color="gray.700">
-              Materias Primas
-            </Heading>
-            {showMultipleForm && (
-              <Button
-                size="sm"
-                leftIcon={<AddIcon />}
-                onClick={addMateriaPrima}
-                colorScheme="green"
-                variant="outline"
-              >
-                Agregar Materia Prima
-              </Button>
-            )}
-          </Flex>
-
-          {formData.materias_primas.length === 0 && !showMultipleForm && (
+          {formData.materias_primas.length === 0 && (
             <Button
               size="sm"
               leftIcon={<AddIcon />}
@@ -240,7 +190,7 @@ const ProductoMateriaPrimaForm = ({ onSubmit, onCancel, formError }) => {
               variant="outline"
               w="full"
             >
-              Agregar Materia Prima
+              Agregar materia prima
             </Button>
           )}
 
@@ -255,17 +205,15 @@ const ProductoMateriaPrimaForm = ({ onSubmit, onCancel, formError }) => {
                 bg="gray.50"
               >
                 <Flex justify="space-between" align="center" mb={3}>
-                  <Badge colorScheme="blue">Materia Prima {index + 1}</Badge>
-                  {showMultipleForm && (
-                    <IconButton
-                      size="sm"
-                      icon={<CloseIcon />}
-                      onClick={() => removeMateriaPrima(index)}
-                      colorScheme="red"
-                      variant="ghost"
-                      aria-label="Eliminar materia prima"
-                    />
-                  )}
+                  <Badge colorScheme="blue">Materia prima {index + 1}</Badge>
+                  <IconButton
+                    size="sm"
+                    icon={<CloseIcon />}
+                    onClick={() => removeMateriaPrima(index)}
+                    colorScheme="red"
+                    variant="ghost"
+                    aria-label="Eliminar materia prima"
+                  />
                 </Flex>
 
                 <VStack spacing={3} align="stretch">
@@ -328,6 +276,20 @@ const ProductoMateriaPrimaForm = ({ onSubmit, onCancel, formError }) => {
               </Box>
             ))}
           </VStack>
+
+          {formData.materias_primas.length > 0 && (
+            <Button
+              mt={4}
+              size="sm"
+              leftIcon={<AddIcon />}
+              onClick={addMateriaPrima}
+              colorScheme="green"
+              variant="outline"
+              w="full"
+            >
+              Agregar otra materia prima
+            </Button>
+          )}
         </Box>
 
         {/* Botones de acción */}
@@ -346,15 +308,14 @@ const ProductoMateriaPrimaForm = ({ onSubmit, onCancel, formError }) => {
             loadingText="Creando..."
             isDisabled={!formData.producto.nombre || formData.materias_primas.length === 0}
           >
-            {showMultipleForm ? 'Crear Producto Completo' : 'Crear Relación'}
+            Crear producto
           </Button>
         </HStack>
 
         {/* Información adicional */}
         <Box p={4} bg="blue.50" borderRadius="md">
           <Text fontSize="sm" color="blue.700">
-            <strong>Nota:</strong> Si el producto o las materias primas no existen, se crearán automáticamente.
-            {showMultipleForm && ' Puedes agregar múltiples materias primas para crear una receta completa.'}
+            <strong>Nota:</strong> Si el producto o alguna materia prima no existe, se creará automáticamente.
           </Text>
         </Box>
       </VStack>
