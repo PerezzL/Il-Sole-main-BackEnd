@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const { createWithCodigo } = require('../utils/codigo');
 
 class ControlPesado {
   static async findAll() {
@@ -24,11 +25,13 @@ class ControlPesado {
       usuario_id
     } = controlPesadoData;
     
-    const result = await pool.query(
-      'INSERT INTO "ControlPesado" (producto, materiaprima, lotemateriaprima, peso, fecha, observaciones, responsable, usuario_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
-      [producto, materiaPrima, loteMateriaPrima, peso, fecha, observaciones, responsable, usuario_id]
-    );
-    return result.rows[0];
+    return createWithCodigo('ControlPesado', 'PESO', async (codigo) => {
+      const result = await pool.query(
+        'INSERT INTO "ControlPesado" (codigo, producto, materiaprima, lotemateriaprima, peso, fecha, observaciones, responsable, usuario_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
+        [codigo, producto, materiaPrima, loteMateriaPrima, peso, fecha, observaciones, responsable, usuario_id]
+      );
+      return result.rows[0];
+    });
   }
 
   static async update(id, controlPesadoData) {

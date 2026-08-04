@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const { createWithCodigo } = require('../utils/codigo');
 
 class Envasado {
   static async findAll() {
@@ -30,11 +31,13 @@ class Envasado {
       usuario_id
     } = envasadoData;
     
-    const result = await pool.query(
-      'INSERT INTO "Envasado" (loteProd, loteEnvasado, producto, cantEnvases, cantDescarte, fechaIngresoPackaging, fechaElaboracion, observaciones, responsable, usuario_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *',
-      [loteProd, loteEnvasado, producto, cantEnvases, cantDescarte, fechaIngresoPackaging, fechaElaboracion, observaciones, responsable, usuario_id]
-    );
-    return result.rows[0];
+    return createWithCodigo('Envasado', 'ENV', async (codigo) => {
+      const result = await pool.query(
+        'INSERT INTO "Envasado" (codigo, loteProd, loteEnvasado, producto, cantEnvases, cantDescarte, fechaIngresoPackaging, fechaElaboracion, observaciones, responsable, usuario_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *',
+        [codigo, loteProd, loteEnvasado, producto, cantEnvases, cantDescarte, fechaIngresoPackaging, fechaElaboracion, observaciones, responsable, usuario_id]
+      );
+      return result.rows[0];
+    });
   }
 
   static async update(id, envasadoData) {

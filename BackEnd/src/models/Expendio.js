@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const { createWithCodigo } = require('../utils/codigo');
 
 class Expendio {
   static async findAll() {
@@ -27,11 +28,13 @@ class Expendio {
       usuario_id
     } = expendioData;
     
-    const result = await pool.query(
-      'INSERT INTO "Expendio" (producto, lote, destino, temptransporte, limptransporte, responsable, usuario_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-      [producto, lote, destino, tempTransporte, LimpTransporte, responsable, usuario_id]
-    );
-    return result.rows[0];
+    return createWithCodigo('Expendio', 'EXP', async (codigo) => {
+      const result = await pool.query(
+        'INSERT INTO "Expendio" (codigo, producto, lote, destino, temptransporte, limptransporte, responsable, usuario_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+        [codigo, producto, lote, destino, tempTransporte, LimpTransporte, responsable, usuario_id]
+      );
+      return result.rows[0];
+    });
   }
 
   static async update(id, expendioData) {

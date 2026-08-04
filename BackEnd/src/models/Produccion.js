@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const { createWithCodigo } = require('../utils/codigo');
 
 class Produccion {
   static async findAll() {
@@ -17,29 +18,25 @@ class Produccion {
   }
 
   static async create(produccionData) {
-    const { 
-      producto, 
-      materiaPrima, 
-      lote, 
-      lotePesada,
-      loteMateriaPrima,
-      planProduccion, 
-      produccion, 
-      pesoDescarte, 
+    const {
+      producto,
+      materiaPrima,
+      lote,
+      planProduccion,
+      produccion,
+      pesoDescarte,
       fechaElaboracion,
-      observaciones, 
+      observaciones,
       comentarios,
       responsable,
       usuario_id
     } = produccionData;
-    
+
     // Validar y limpiar datos
     const cleanData = {
       producto: producto || '',
       materiaPrima: materiaPrima || '',
       lote: lote || '',
-      lotePesada: lotePesada || null,
-      loteMateriaPrima: loteMateriaPrima || null,
       planProduccion: planProduccion || null,
       produccion: produccion || 0,
       pesoDescarte: pesoDescarte || 0,
@@ -48,32 +45,32 @@ class Produccion {
       comentarios: comentarios || '',
       responsable: responsable || 'Usuario desconocido',
       usuario_id: usuario_id || null
-    };    
-    const result = await pool.query(
-      'INSERT INTO "Produccion" (producto, materiaprima, lote, lotepesada, lotemateriaprima, planproduccion, produccion, pesodescarte, fechaelaboracion, observaciones, comentarios, responsable, usuario_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *',
-      [cleanData.producto, cleanData.materiaPrima, cleanData.lote, cleanData.lotePesada, cleanData.loteMateriaPrima, cleanData.planProduccion, cleanData.produccion, cleanData.pesoDescarte, cleanData.fechaElaboracion, cleanData.observaciones, cleanData.comentarios, cleanData.responsable, cleanData.usuario_id]
-    );
-    return result.rows[0];
+    };
+    return createWithCodigo('Produccion', 'PROD', async (codigo) => {
+      const result = await pool.query(
+        'INSERT INTO "Produccion" (codigo, producto, materiaprima, lote, planproduccion, produccion, pesodescarte, fechaelaboracion, observaciones, comentarios, responsable, usuario_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *',
+        [codigo, cleanData.producto, cleanData.materiaPrima, cleanData.lote, cleanData.planProduccion, cleanData.produccion, cleanData.pesoDescarte, cleanData.fechaElaboracion, cleanData.observaciones, cleanData.comentarios, cleanData.responsable, cleanData.usuario_id]
+      );
+      return result.rows[0];
+    });
   }
 
   static async update(id, produccionData) {
-    const { 
-      producto, 
-      materiaPrima, 
-      lote, 
-      lotePesada,
-      loteMateriaPrima,
-      planProduccion, 
-      produccion, 
-      pesoDescarte, 
+    const {
+      producto,
+      materiaPrima,
+      lote,
+      planProduccion,
+      produccion,
+      pesoDescarte,
       fechaElaboracion,
-      observaciones, 
-      comentarios 
+      observaciones,
+      comentarios
     } = produccionData;
-    
+
     const result = await pool.query(
-      'UPDATE "Produccion" SET producto = $1, materiaprima = $2, lote = $3, lotepesada = $4, lotemateriaprima = $5, planproduccion = $6, produccion = $7, pesodescarte = $8, fechaelaboracion = $9, observaciones = $10, comentarios = $11 WHERE id = $12 RETURNING *',
-      [producto, materiaPrima, lote, lotePesada, loteMateriaPrima, planProduccion, produccion, pesoDescarte, fechaElaboracion, observaciones, comentarios, id]
+      'UPDATE "Produccion" SET producto = $1, materiaprima = $2, lote = $3, planproduccion = $4, produccion = $5, pesodescarte = $6, fechaelaboracion = $7, observaciones = $8, comentarios = $9 WHERE id = $10 RETURNING *',
+      [producto, materiaPrima, lote, planProduccion, produccion, pesoDescarte, fechaElaboracion, observaciones, comentarios, id]
     );
     return result.rows[0];
   }
