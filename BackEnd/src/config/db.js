@@ -11,6 +11,10 @@ function cleanConnectionString(raw) {
   if (!raw) return raw;
   let cleaned = raw.replace(/[&?]supa=[^&]*/gi, '');
   cleaned = cleaned.replace(/[&?]pgbouncer=[^&]*/gi, '');
+  // sslmode=require en la URL hace que `pg` ignore el objeto `ssl` que le pasamos
+  // explícitamente (getPgSslOptions) y exija validar el certificado, lo cual falla
+  // contra el pooler de Supabase. El SSL se controla solo con el objeto `ssl`.
+  cleaned = cleaned.replace(/[&?]sslmode=require\b/gi, '');
   return cleaned;
 }
 
