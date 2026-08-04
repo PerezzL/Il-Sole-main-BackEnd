@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Button, Container, FormControl, FormLabel, Input, Select, Heading, VStack, useToast, Spinner, Text, HStack } from '@chakra-ui/react';
 import backgroundImg from '../images/background.png';
-import { createSemielaborado, getMateriasPrimas } from '../config/api';
+import { createSemielaborado, getMateriasPrimas, getSemielaboradosNombres } from '../config/api';
+
+const NUEVO_SEMIELABORADO = '__nuevo__';
 
 const Semielaborado = () => {
   const [formData, setFormData] = useState({
@@ -15,8 +17,11 @@ const Semielaborado = () => {
   });
 
   const [materiasPrimas, setMateriasPrimas] = useState([]);
+  const [semielaboradosNombres, setSemielaboradosNombres] = useState([]);
+  const [nuevoSemielaborado, setNuevoSemielaborado] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingMaterias, setLoadingMaterias] = useState(false);
+  const [loadingSemielaborados, setLoadingSemielaborados] = useState(false);
 
   const toast = useToast();
 
@@ -25,10 +30,10 @@ const Semielaborado = () => {
     const fetchMateriasPrimas = async () => {
       try {
         setLoadingMaterias(true);
-        const data = await getMateriasPrimas();        
+        const data = await getMateriasPrimas();
         // Filtrar solo materias primas activas
         const materiasActivas = data.filter(mp => mp.activo !== false);
-        
+
         setMateriasPrimas(materiasActivas);
       } catch (error) {        toast({
           title: 'Error al cargar materias primas',
@@ -46,9 +51,43 @@ const Semielaborado = () => {
     fetchMateriasPrimas();
   }, [toast]);
 
+  // Cargar semielaborados ya registrados
+  useEffect(() => {
+    const fetchSemielaborados = async () => {
+      try {
+        setLoadingSemielaborados(true);
+        const data = await getSemielaboradosNombres();
+        setSemielaboradosNombres(data);
+      } catch (error) {
+        toast({
+          title: 'Error al cargar semielaborados',
+          description: error.message,
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+      } finally {
+        setLoadingSemielaborados(false);
+      }
+    };
+
+    fetchSemielaborados();
+  }, [toast]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+  };
+
+  const handleSemielaboradoSelect = (e) => {
+    const { value } = e.target;
+    if (value === NUEVO_SEMIELABORADO) {
+      setNuevoSemielaborado(true);
+      setFormData({ ...formData, semielaborado: '' });
+    } else {
+      setNuevoSemielaborado(false);
+      setFormData({ ...formData, semielaborado: value });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -71,6 +110,10 @@ const Semielaborado = () => {
         fecha: '',
         observaciones: '',
       });
+      setNuevoSemielaborado(false);
+      setSemielaboradosNombres((prev) =>
+        prev.includes(formData.semielaborado) ? prev : [...prev, formData.semielaborado].sort()
+      );
     } catch (error) {
       toast({
         title: 'Error al guardar',
@@ -120,16 +163,41 @@ const Semielaborado = () => {
             <VStack spacing={4} w="full">
               <FormControl id="semielaborado" isRequired>
                 <FormLabel>Semielaborado</FormLabel>
-                <Input
-                  type="text"
+                <Select
                   name="semielaborado"
-                  value={formData.semielaborado}
-                  onChange={handleChange}
-                  placeholder="Ej: Masa para pizza, Queso rallado, etc."
+                  value={nuevoSemielaborado ? NUEVO_SEMIELABORADO : formData.semielaborado}
+                  onChange={handleSemielaboradoSelect}
+                  placeholder="Selecciona un semielaborado"
                   bg="white"
                   w="full"
-                  isDisabled={loading}
-                />
+                  isDisabled={loading || loadingSemielaborados}
+                >
+                  {loadingSemielaborados ? (
+                    <option value="">Cargando semielaborados...</option>
+                  ) : (
+                    <>
+                      {semielaboradosNombres.map((nombre) => (
+                        <option key={nombre} value={nombre}>
+                          {nombre}
+                        </option>
+                      ))}
+                      <option value={NUEVO_SEMIELABORADO}>+ Agregar nuevo semielaborado</option>
+                    </>
+                  )}
+                </Select>
+                {nuevoSemielaborado && (
+                  <Input
+                    mt={2}
+                    type="text"
+                    name="semielaborado"
+                    value={formData.semielaborado}
+                    onChange={handleChange}
+                    placeholder="Nombre del nuevo semielaborado"
+                    bg="white"
+                    w="full"
+                    isDisabled={loading}
+                  />
+                )}
               </FormControl>
               
               <FormControl id="ingrediente" isRequired>

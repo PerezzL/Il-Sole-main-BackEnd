@@ -82,6 +82,16 @@ class Semielaborado {
     const result = await pool.query('SELECT * FROM "Semielaborado" WHERE lote = $1', [lote]);
     return result.rows;
   }
+
+  // Nombres únicos ya cargados, para el dropdown del formulario
+  static async findDistinctNames() {
+    const result = await pool.query(
+      `SELECT DISTINCT semielaborado FROM "Semielaborado"
+       WHERE semielaborado IS NOT NULL AND semielaborado <> ''
+       ORDER BY semielaborado`
+    );
+    return result.rows.map((row) => row.semielaborado);
+  }
 }
 
 module.exports = Semielaborado;

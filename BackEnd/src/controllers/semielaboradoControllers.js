@@ -7,6 +7,16 @@ exports.getAllSemielaborados = async (req, res) => {
   }
 };
 
+// Nombres de semielaborados ya cargados, para el dropdown del formulario
+exports.getSemielaboradosNombres = async (req, res) => {
+  try {
+    const nombres = await Semielaborado.findDistinctNames();
+    res.json(nombres);
+  } catch (err) {
+    res.status(500).json({ error: 'Error al obtener los nombres de semielaborados', details: err.message });
+  }
+};
+
 // Obtener un registro de semielaborado por ID
 exports.getSemielaboradoById = async (req, res) => {
   const { id } = req.params;

@@ -222,6 +222,7 @@ export const deleteControlPesado = (id) => apiRequest(`/control-pesado/${id}`, {
 // SEMIELABORADOS
 // ============================================================================
 export const getSemielaborados = () => apiRequest('/semielaborado');
+export const getSemielaboradosNombres = () => apiRequest('/semielaborado/dropdown/nombres');
 export const createSemielaborado = (data) => apiRequest('/semielaborado', {
   method: 'POST',
   body: JSON.stringify(data)
