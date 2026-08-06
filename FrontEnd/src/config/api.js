@@ -236,6 +236,18 @@ export const deleteSemielaborado = (id) => apiRequest(`/semielaborado/${id}`, {
 });
 
 // ============================================================================
+// NOTIFICACIONES
+// ============================================================================
+export const getNotificaciones = () => apiRequest('/notificaciones');
+export const getNotificacionesNoLeidasCount = () => apiRequest('/notificaciones/no-leidas/count');
+export const marcarNotificacionLeida = (id) => apiRequest(`/notificaciones/${id}/leido`, {
+  method: 'PUT'
+});
+export const marcarTodasNotificacionesLeidas = () => apiRequest('/notificaciones/leidas', {
+  method: 'PUT'
+});
+
+// ============================================================================
 // ENVASADO
 // ============================================================================
 export const getEnvasado = () => apiRequest('/envasado');

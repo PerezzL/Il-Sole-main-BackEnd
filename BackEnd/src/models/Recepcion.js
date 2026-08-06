@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const { createWithCodigo } = require('../utils/codigo');
+const { notificarRegistroCreado } = require('../utils/notificaciones');
 
 class Recepcion {
   static async findAll() {
@@ -36,7 +37,9 @@ class Recepcion {
         'INSERT INTO "Recepcion" (codigo, materiaPrima, control1, control2, control3, marca, proveedor, cant, nroRemito, temp, fechaElaborado, fechaVTO, lote, responsable, usuario_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING *',
         [codigo, materiaPrima, control1, control2, control3, marca, proveedor, cant, nroRemito, temp, fechaElaborado, fechaVTO, lote, responsable, usuario_id]
       );
-      return result.rows[0];
+      const row = result.rows[0];
+      await notificarRegistroCreado({ tabla: 'Recepcion', codigo: row.codigo, usuario_id: row.usuario_id, responsable: row.responsable });
+      return row;
     });
   }
 

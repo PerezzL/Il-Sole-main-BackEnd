@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const { createWithCodigo } = require('../utils/codigo');
+const { notificarRegistroCreado } = require('../utils/notificaciones');
 
 class ControlPesado {
   static async findAll() {
@@ -30,7 +31,9 @@ class ControlPesado {
         'INSERT INTO "ControlPesado" (codigo, producto, materiaprima, lotemateriaprima, peso, fecha, observaciones, responsable, usuario_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
         [codigo, producto, materiaPrima, loteMateriaPrima, peso, fecha, observaciones, responsable, usuario_id]
       );
-      return result.rows[0];
+      const row = result.rows[0];
+      await notificarRegistroCreado({ tabla: 'ControlPesado', codigo: row.codigo, usuario_id: row.usuario_id, responsable: row.responsable });
+      return row;
     });
   }
 

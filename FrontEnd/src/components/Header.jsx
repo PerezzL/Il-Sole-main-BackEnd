@@ -16,6 +16,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ChevronDownIcon } from '@chakra-ui/icons';
 import logo  from '../images/logo.png';
 import { useAuth } from '../context/AuthContext';
+import NotificationBell from './NotificationBell';
 
 const Header = () => {
   const { isAuthenticated, user, logout } = useAuth();
@@ -95,7 +96,8 @@ const Header = () => {
             </Box>
 
             {/* Menú de usuario o botón de login - SIEMPRE a la derecha */}
-            <Box flex="1" display="flex" justifyContent="flex-end">
+            <Box flex="1" display="flex" justifyContent="flex-end" alignItems="center" gap={2}>
+              {isAuthenticated && <NotificationBell />}
               {isAuthenticated ? (
                 <Menu>
                   <MenuButton
