@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Box,
   Table,
@@ -12,6 +12,7 @@ import {
   HStack,
   Badge,
   Spinner,
+  Select,
   useToast,
 } from '@chakra-ui/react';
 import {
@@ -41,7 +42,14 @@ const SolicitudesEdicionPanel = () => {
   const [solicitudes, setSolicitudes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [procesandoId, setProcesandoId] = useState(null);
+  const [sectorFiltro, setSectorFiltro] = useState('todos');
   const toast = useToast();
+
+  const solicitudesFiltradas = useMemo(() => {
+    if (sectorFiltro === 'todos') return solicitudes;
+    const sector = sectores.find((s) => s.key === sectorFiltro);
+    return solicitudes.filter((s) => s.tabla === sector?.tabla);
+  }, [solicitudes, sectorFiltro]);
 
   const fetchSolicitudes = useCallback(async () => {
     setLoading(true);
@@ -93,6 +101,24 @@ const SolicitudesEdicionPanel = () => {
     }
   };
 
+const filtroSelect = (
+    <Select
+      value={sectorFiltro}
+      onChange={(e) => setSectorFiltro(e.target.value)}
+      w="100%"
+      maxW="320px"
+      bg="white"
+      mb={4}
+    >
+      <option value="todos">Todos los sectores</option>
+      {sectores.map((s) => (
+        <option key={s.key} value={s.key}>
+          {s.label}
+        </option>
+      ))}
+    </Select>
+  );
+
   if (loading) {
     return (
       <Box textAlign="center" py={8}>
@@ -102,16 +128,25 @@ const SolicitudesEdicionPanel = () => {
     );
   }
 
-  if (solicitudes.length === 0) {
+  if (solicitudesFiltradas.length === 0) {
     return (
-      <Box p={6} bg="gray.50" borderRadius="md" border="1px" borderColor="gray.200" textAlign="center">
-        <Text color="gray.500">No hay solicitudes de edición pendientes</Text>
+      <Box>
+        {filtroSelect}
+        <Box p={6} bg="gray.50" borderRadius="md" border="1px" borderColor="gray.200" textAlign="center">
+          <Text color="gray.500">
+            {solicitudes.length === 0
+              ? 'No hay solicitudes de edición pendientes'
+              : 'No hay solicitudes pendientes para ese sector'}
+          </Text>
+        </Box>
       </Box>
     );
   }
 
   return (
-    <Box overflowX="auto" border="1px" borderColor="gray.200" borderRadius="md">
+    <Box>
+      {filtroSelect}
+      <Box overflowX="auto" border="1px" borderColor="gray.200" borderRadius="md">
       <Table variant="simple" size="sm">
         <Thead bg="orange.100">
           <Tr>
@@ -123,7 +158,7 @@ const SolicitudesEdicionPanel = () => {
           </Tr>
         </Thead>
         <Tbody>
-          {solicitudes.map((s) => (
+          {solicitudesFiltradas.map((s) => (
             <Tr key={s.id} _hover={{ bg: 'gray.50' }}>
               <Td>
                 <Badge colorScheme="blue" variant="subtle">
@@ -158,6 +193,7 @@ const SolicitudesEdicionPanel = () => {
           ))}
         </Tbody>
       </Table>
+      </Box>
     </Box>
   );
 };
