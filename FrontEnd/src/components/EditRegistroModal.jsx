@@ -58,7 +58,13 @@ const EditRegistroModal = ({ isOpen, onClose, sector, columns, registro, onSaved
   const handleSave = async () => {
     setSaving(true);
     try {
-      await updateRegistroBySector(sector, registro.id, formData);
+      // El backend espera los nombres de parámetro en camelCase (c.field);
+      // formData está keyed por el nombre de columna de la DB (c.key).
+      const payload = {};
+      campos.forEach((c) => {
+        payload[c.field || c.key] = formData[c.key];
+      });
+      await updateRegistroBySector(sector, registro.id, payload);
       toast({
         title: 'Registro actualizado',
         status: 'success',

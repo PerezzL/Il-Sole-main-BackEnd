@@ -57,30 +57,32 @@ const MODULES = [
     description: 'Salidas y distribución.',
     Icon: Store,
   },
-  {
-    path: '/editar-registros',
-    title: 'Editar mis registros',
-    description: 'Pedile acceso a un admin para corregir un registro cargado.',
-    Icon: PencilLine,
-  },
 ];
 
 const Homepage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
 
-  const items =
-    user?.role === 'admin'
-      ? [
-          ...MODULES,
-          {
-            path: '/admin',
-            title: 'Panel de administrador',
-            description: 'Usuarios, productos y configuración.',
-            Icon: ShieldCheck,
-          },
-        ]
-      : MODULES;
+  const items = isAdmin
+    ? [
+        ...MODULES,
+        {
+          path: '/admin',
+          title: 'Panel de administrador',
+          description: 'Usuarios, productos y configuración.',
+          Icon: ShieldCheck,
+        },
+      ]
+    : [
+        ...MODULES,
+        {
+          path: '/editar-registros',
+          title: 'Editar mis registros',
+          description: 'Pedile acceso a un admin para corregir un registro cargado.',
+          Icon: PencilLine,
+        },
+      ];
 
   return (
     <Box minH="100vh" display="flex" flexDirection="column" bg="brand.cream">
