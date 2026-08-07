@@ -8,128 +8,11 @@ import UserForm from './components/UserForm';
 import RegistrosTable from './components/RegistrosTable';
 import ProductoMateriaPrimaForm from './components/ProductoMateriaPrimaForm';
 import ProductoMateriaPrimaTable from './components/ProductoMateriaPrimaTable';
+import SolicitudesEdicionPanel from './components/SolicitudesEdicionPanel';
 import { useAuth } from './context/AuthContext';
+import { sectores } from './config/sectores';
 
 import { getUsers, createUser, deleteUser } from './config/api';
-
-const sectores = [
-  {
-    key: 'recepcion',
-    label: 'Recepción',
-    endpoint: 'recepcion',
-    columns: [
-      { key: 'id', label: 'ID' },
-      { key: 'materiaprima', label: 'Materia Prima' },
-      { key: 'control1', label: 'Control Transporte' },
-      { key: 'control2', label: 'Control Envase' },
-      { key: 'control3', label: 'Control Rotulado' },
-      { key: 'marca', label: 'Marca' },
-      { key: 'proveedor', label: 'Proveedor' },
-      { key: 'cant', label: 'Cantidad' },
-      { key: 'nroremito', label: 'Nro Remito' },
-      { key: 'temp', label: 'Temperatura' },
-      { key: 'fechaelaborado', label: 'Fecha Elaborado' },
-      { key: 'fechavto', label: 'Fecha Vto.' },
-      { key: 'lote', label: 'Lote' },
-      { key: 'responsable', label: 'Responsable' },
-      { key: 'created_at', label: 'Fecha Creación' },
-    ],
-    filtros: ['lote', 'materiaprima', 'proveedor', 'nroremito', 'responsable'],
-  },
-  {
-    key: 'semielaborado',
-    label: 'Semielaborados',
-    endpoint: 'semielaborado',
-    columns: [
-      { key: 'id', label: 'ID' },
-      { key: 'semielaborado', label: 'Semielaborado' },
-      { key: 'ingrediente', label: 'Ingrediente' },
-      { key: 'lotemateriaprima', label: 'Lote Materia Prima' },
-      { key: 'lote', label: 'Lote' },
-      { key: 'peso', label: 'Peso' },
-      { key: 'fecha', label: 'Fecha' },
-      { key: 'observaciones', label: 'Observaciones' },
-      { key: 'responsable', label: 'Responsable' },
-      { key: 'created_at', label: 'Fecha Creación' },
-    ],
-    filtros: ['semielaborado', 'ingrediente', 'lote', 'fecha', 'responsable'],
-  },
-  {
-    key: 'production',
-    label: 'Producción',
-    endpoint: 'production',
-    columns: [
-      { key: 'id', label: 'ID' },
-      { key: 'producto', label: 'Producto' },
-      { key: 'materiaprima', label: 'Materia Prima' },
-      { key: 'lote', label: 'Lote' },
-      { key: 'planproduccion', label: 'Plan Producción' },
-      { key: 'produccion', label: 'Producción' },
-      { key: 'pesodescarte', label: 'Peso Descarte' },
-      { key: 'observaciones', label: 'Observaciones' },
-      { key: 'comentarios', label: 'Comentarios' },
-      { key: 'responsable', label: 'Responsable' },
-      { key: 'created_at', label: 'Fecha Creación' },
-    ],
-    filtros: ['lote', 'producto', 'materiaprima', 'responsable'],
-  },
-  {
-    key: 'control-pesado',
-    label: 'Control Pesado',
-    endpoint: 'control-pesado',
-    columns: [
-      { key: 'id', label: 'ID' },
-      { key: 'producto', label: 'Producto' },
-      { key: 'materiaprima', label: 'Materia Prima' },
-      { key: 'lotemateriaprima', label: 'Lote Materia Prima' },
-      { key: 'peso', label: 'Peso' },
-      { key: 'fecha', label: 'Fecha' },
-      { key: 'observaciones', label: 'Observaciones' },
-      { key: 'responsable', label: 'Responsable' },
-      { key: 'created_at', label: 'Fecha Creación' },
-    ],
-    filtros: ['producto', 'materiaprima', 'fecha', 'responsable'],
-  },
-  {
-    key: 'envasado',
-    label: 'Envasado',
-    endpoint: 'envasado',
-    columns: [
-      { key: 'id', label: 'ID' },
-      { key: 'loteprod', label: 'Lote Producción' },
-      { key: 'loteenvasado', label: 'Lote Envasado' },
-      { key: 'producto', label: 'Producto' },
-      { key: 'cantenvases', label: 'Cantidad Envases' },
-      { key: 'cantdescarte', label: 'Cantidad Descarte' },
-      { key: 'fechaingresopackaging', label: 'Fecha Ingreso Packaging' },
-      { key: 'fechaelaboracion', label: 'Fecha de Elaboración' },
-      { key: 'observaciones', label: 'Observaciones' },
-      { key: 'responsable', label: 'Responsable' },
-      { key: 'created_at', label: 'Fecha Creación' },
-    ],
-    filtros: ['loteprod', 'loteenvasado', 'producto', 'responsable'],
-  },
-  {
-    key: 'expendio',
-    label: 'Expendio',
-    endpoint: 'expendio',
-    columns: [
-      { key: 'id', label: 'ID' },
-      { key: 'producto', label: 'Producto' },
-      { key: 'lote', label: 'Lote' },
-      { key: 'destino', label: 'Destino' },
-      { key: 'temptransporte', label: 'Temp. Transporte' },
-      { 
-        key: 'limptransporte', 
-        label: 'Limpieza Transporte',
-        render: (value) => value === true ? 'Sí' : value === false ? 'No' : '-'
-      },
-      { key: 'responsable', label: 'Responsable' },
-      { key: 'created_at', label: 'Fecha Creación' },
-    ],
-    filtros: ['lote', 'producto', 'destino', 'responsable'],
-  },
-];
 
 const AdminPage = () => {
   const [users, setUsers] = useState([]);
@@ -247,6 +130,9 @@ const AdminPage = () => {
             <Tab flexShrink={0} whiteSpace="nowrap" fontSize={{ base: 'xs', sm: 'sm', md: 'md' }}>
               Productos y Materias Primas
             </Tab>
+            <Tab flexShrink={0} whiteSpace="nowrap" fontSize={{ base: 'xs', sm: 'sm', md: 'md' }}>
+              Solicitudes de Edición
+            </Tab>
           </TabList>
 
           <TabPanels>
@@ -352,6 +238,13 @@ const AdminPage = () => {
                   formError={formError} 
                 />
               </Collapse>
+            </TabPanel>
+
+            <TabPanel>
+              <Heading as="h2" size="lg" mb={4} fontSize={{ base: 'lg', md: 'xl' }}>
+                Solicitudes de Edición
+              </Heading>
+              <SolicitudesEdicionPanel />
             </TabPanel>
 
           </TabPanels>

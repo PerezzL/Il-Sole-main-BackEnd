@@ -10,6 +10,7 @@ import Recepcion from './Recepcion';
 import FormPesado from './FormPesado';
 import FormSemielaborado from './FormSemielaborado';
 import TrazabilidadPage from './TrazabilidadPage';
+import EditarRegistrosPage from './EditarRegistrosPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -96,6 +97,11 @@ const AppRoutes = () => {
       <Route path='/trazabilidad' element={
         <ProtectedRoute>
           <TrazabilidadPage />
+        </ProtectedRoute>
+      } />
+      <Route path='/editar-registros' element={
+        <ProtectedRoute>
+          <EditarRegistrosPage />
         </ProtectedRoute>
       } />
       

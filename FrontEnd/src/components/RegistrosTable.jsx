@@ -41,6 +41,7 @@ import {
 import { getRegistrosBySector, deleteRegistroBySector } from '../config/api';
 import TrazabilidadModal from './TrazabilidadModal';
 import { useTrazabilidad } from '../hooks/useTrazabilidad';
+import EditRegistroModal from './EditRegistroModal';
 
 const RegistrosTable = ({ sector, columns, filtros, showFilters = true }) => {
   const [registros, setRegistros] = useState([]);
@@ -63,6 +64,9 @@ const RegistrosTable = ({ sector, columns, filtros, showFilters = true }) => {
   const [tipoFiltroFecha, setTipoFiltroFecha] = useState('especifica'); // 'especifica' o 'rango'
   const [registroToDelete, setRegistroToDelete] = useState(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [registroToEdit, setRegistroToEdit] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const toast = useToast();
 
   // Inicializar filtros
@@ -97,7 +101,7 @@ const RegistrosTable = ({ sector, columns, filtros, showFilters = true }) => {
     };
 
     fetchRegistros();
-  }, [sector, toast]);
+  }, [sector, toast, refreshKey]);
 
   // Manejar cambios en filtros
   const handleFiltroChange = (filtro, value) => {
@@ -755,14 +759,8 @@ const RegistrosTable = ({ sector, columns, filtros, showFilters = true }) => {
                         colorScheme="blue"
                         variant="ghost"
                         onClick={() => {
-                          // TODO: Implementar edición
-                          toast({
-                            title: 'Función en desarrollo',
-                            description: 'La edición de registros estará disponible pronto',
-                            status: 'info',
-                            duration: 3000,
-                            isClosable: true,
-                          });
+                          setRegistroToEdit(registro);
+                          setIsEditModalOpen(true);
                         }}
                       />
                       <IconButton
@@ -818,6 +816,16 @@ const RegistrosTable = ({ sector, columns, filtros, showFilters = true }) => {
         onClose={closeTrazabilidad}
         registroId={registroActual}
         tipoTabla={tipoTablaActual}
+      />
+
+      {/* Modal de edición */}
+      <EditRegistroModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        sector={sector}
+        columns={columns}
+        registro={registroToEdit}
+        onSaved={() => setRefreshKey((k) => k + 1)}
       />
     </Box>
   );

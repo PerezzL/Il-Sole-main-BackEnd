@@ -248,6 +248,22 @@ export const marcarTodasNotificacionesLeidas = () => apiRequest('/notificaciones
 });
 
 // ============================================================================
+// SOLICITUDES DE EDICIÓN
+// ============================================================================
+export const crearSolicitudEdicion = (data) => apiRequest('/solicitudes-edicion', {
+  method: 'POST',
+  body: JSON.stringify(data)
+});
+export const getMisSolicitudesEdicion = () => apiRequest('/solicitudes-edicion/mias');
+export const getSolicitudesEdicionPendientes = () => apiRequest('/solicitudes-edicion/pendientes');
+export const aprobarSolicitudEdicion = (id) => apiRequest(`/solicitudes-edicion/${id}/aprobar`, {
+  method: 'PUT'
+});
+export const rechazarSolicitudEdicion = (id) => apiRequest(`/solicitudes-edicion/${id}/rechazar`, {
+  method: 'PUT'
+});
+
+// ============================================================================
 // ENVASADO
 // ============================================================================
 export const getEnvasado = () => apiRequest('/envasado');

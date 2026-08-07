@@ -11,6 +11,7 @@ import {
   BoxIcon,
   Store,
   ShieldCheck,
+  PencilLine,
 } from 'lucide-react';
 import backgroundImg from './images/background.png';
 import Header from './components/Header.jsx';
@@ -55,6 +56,12 @@ const MODULES = [
     title: 'Control expendio',
     description: 'Salidas y distribución.',
     Icon: Store,
+  },
+  {
+    path: '/editar-registros',
+    title: 'Editar mis registros',
+    description: 'Pedile acceso a un admin para corregir un registro cargado.',
+    Icon: PencilLine,
   },
 ];
 

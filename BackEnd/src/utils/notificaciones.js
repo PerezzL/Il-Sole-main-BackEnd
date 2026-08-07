@@ -53,4 +53,4 @@ async function notificarRegistroCreado({ tabla, codigo, usuario_id, responsable 
   }
 }
 
-module.exports = { notificarRegistroCreado };
+module.exports = { notificarRegistroCreado, NOMBRES_TABLA };
