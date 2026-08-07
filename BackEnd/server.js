@@ -121,26 +121,6 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '10mb' })); // Para parsear JSON con límite aumentado
 app.use(express.urlencoded({ extended: true, limit: '10mb' })); // Para parsear datos de formulario
 
-// TEMPORAL: endpoint de migracion, protegido por JWT_SECRET como shared secret.
-// Se borra apenas se corre la migracion de la tabla SolicitudEdicion.
-app.post('/api/_migrate_solicitud_edicion', async (req, res) => {
-  if (req.headers['x-migrate-secret'] !== process.env.JWT_SECRET) {
-    return res.status(403).json({ error: 'forbidden' });
-  }
-  try {
-    const fs = require('fs');
-    const path = require('path');
-    const sql = fs.readFileSync(path.join(__dirname, 'database', 'add_solicitud_edicion_table.sql'), 'utf8');
-    await pool.query(sql);
-    const check = await pool.query(
-      `SELECT column_name FROM information_schema.columns WHERE table_name = 'SolicitudEdicion' ORDER BY ordinal_position`
-    );
-    res.json({ ok: true, columns: check.rows.map((r) => r.column_name) });
-  } catch (err) {
-    res.status(500).json({ ok: false, error: err.message });
-  }
-});
-
 app.get('/api/health', async (req, res) => {
   try {
     let dbOk = false;
