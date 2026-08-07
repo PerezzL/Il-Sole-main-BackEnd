@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const Expendio = require('../models/Expendio');
+const { notificarRegistroEditado } = require('../utils/notificaciones');
 
 exports.getAllExpendios = async (req, res) => {
   try {
@@ -49,16 +50,38 @@ exports.createExpendio = async (req, res) => {
 // Actualizar un expendio
 exports.updateExpendio = async (req, res) => {
   const { id } = req.params;
-  const { producto, lote, destino, tempTransporte, LimpTransporte, responsable } = req.body;
+  const { producto, lote, destino, tempTransporte, LimpTransporte } = req.body;
   try {
+    const campos = [];
+    const valores = [];
+    let i = 1;
+
+    if (producto !== undefined) { campos.push(`producto = $${i++}`); valores.push(producto); }
+    if (lote !== undefined) { campos.push(`lote = $${i++}`); valores.push(lote); }
+    if (destino !== undefined) { campos.push(`destino = $${i++}`); valores.push(destino); }
+    if (tempTransporte !== undefined) { campos.push(`tempTransporte = $${i++}`); valores.push(tempTransporte); }
+    if (LimpTransporte !== undefined) { campos.push(`LimpTransporte = $${i++}`); valores.push(LimpTransporte); }
+
+    if (campos.length === 0) {
+      return res.status(400).json({ error: 'No se envió ningún campo para actualizar' });
+    }
+
+    valores.push(id);
     const result = await pool.query(
-      'UPDATE "Expendio" SET producto = $1, lote = $2, destino = $3, tempTransporte = $4, LimpTransporte = $5, responsable = $6 WHERE id = $7 RETURNING *',
-      [producto, lote, destino, tempTransporte, LimpTransporte, responsable, id]
+      `UPDATE "Expendio" SET ${campos.join(', ')} WHERE id = $${i} RETURNING *`,
+      valores
     );
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Expendio no encontrado' });
     }
-    res.json(result.rows[0]);
+    const expendio = result.rows[0];
+    await notificarRegistroEditado({
+      tabla: 'Expendio',
+      codigo: expendio.codigo,
+      editor_id: req.user?.id,
+      editor_nombre: req.user?.username,
+    });
+    res.json(expendio);
   } catch (err) {
     res.status(500).json({ error: 'Error al actualizar el expendio' });
   }

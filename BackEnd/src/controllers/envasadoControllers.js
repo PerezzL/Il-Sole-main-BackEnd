@@ -1,4 +1,5 @@
 const Envasado = require('../models/Envasado');
+const { notificarRegistroEditado } = require('../utils/notificaciones');
 
 // Obtener todos los envasados
 exports.getAllEnvasados = async (req, res) => {
@@ -87,6 +88,12 @@ exports.updateEnvasado = async (req, res) => {
     if (!envasado) {
       return res.status(404).json({ error: 'Envasado no encontrado' });
     }
+    await notificarRegistroEditado({
+      tabla: 'Envasado',
+      codigo: envasado.codigo,
+      editor_id: req.user?.id,
+      editor_nombre: req.user?.username,
+    });
     res.json(envasado);
   } catch (err) {    res.status(500).json({ error: 'Error al actualizar el envasado' });
   }

@@ -1,4 +1,5 @@
 const Produccion = require('../models/Produccion');
+const { notificarRegistroEditado } = require('../utils/notificaciones');
 
 // Obtener todas las producciones
 exports.getAllProducciones = async (req, res) => {
@@ -107,6 +108,12 @@ exports.updateProduccion = async (req, res) => {
     if (!updatedProduccion) {
       return res.status(404).json({ error: 'Producción no encontrada' });
     }
+    await notificarRegistroEditado({
+      tabla: 'Produccion',
+      codigo: updatedProduccion.codigo,
+      editor_id: req.user?.id,
+      editor_nombre: req.user?.username,
+    });
     res.json(updatedProduccion);
   } catch (err) {    res.status(500).json({ error: 'Error al actualizar la producción' });
   }

@@ -1,4 +1,5 @@
 const Semielaborado = require('../models/Semielaborado');
+const { notificarRegistroEditado } = require('../utils/notificaciones');
 
 // Obtener todos los registros de semielaborados
 exports.getAllSemielaborados = async (req, res) => {
@@ -71,6 +72,12 @@ exports.updateSemielaborado = async (req, res) => {
     if (!semielaboradoActualizado) {
       return res.status(404).json({ error: 'Registro de semielaborado no encontrado' });
     }
+    await notificarRegistroEditado({
+      tabla: 'Semielaborado',
+      codigo: semielaboradoActualizado.codigo,
+      editor_id: req.user?.id,
+      editor_nombre: req.user?.username,
+    });
     res.json(semielaboradoActualizado);
   } catch (err) {    res.status(500).json({ error: 'Error al actualizar el registro de semielaborado' });
   }

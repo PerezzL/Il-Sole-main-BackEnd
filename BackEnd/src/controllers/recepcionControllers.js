@@ -1,4 +1,5 @@
 const Recepcion = require('../models/Recepcion');
+const { notificarRegistroEditado } = require('../utils/notificaciones');
 
 // Obtener todas las recepciones
 exports.getAllRecepciones = async (req, res) => {
@@ -103,6 +104,12 @@ exports.updateRecepcion = async (req, res) => {
     if (!recepcion) {
       return res.status(404).json({ error: 'Recepción no encontrada' });
     }
+    await notificarRegistroEditado({
+      tabla: 'Recepcion',
+      codigo: recepcion.codigo,
+      editor_id: req.user?.id,
+      editor_nombre: req.user?.username,
+    });
     res.json(recepcion);
   } catch (err) {    res.status(500).json({ error: 'Error al actualizar la recepción' });
   }

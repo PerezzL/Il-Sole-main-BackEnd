@@ -1,4 +1,5 @@
 const ControlPesado = require('../models/ControlPesado');
+const { notificarRegistroEditado } = require('../utils/notificaciones');
 
 // Obtener todos los registros de pesado
 exports.getAllPesados = async (req, res) => {
@@ -59,6 +60,12 @@ exports.updatePesado = async (req, res) => {
     if (!pesado) {
       return res.status(404).json({ error: 'Registro de pesado no encontrado' });
     }
+    await notificarRegistroEditado({
+      tabla: 'ControlPesado',
+      codigo: pesado.codigo,
+      editor_id: req.user?.id,
+      editor_nombre: req.user?.username,
+    });
     res.json(pesado);
   } catch (err) {    res.status(500).json({ error: 'Error al actualizar el registro de pesado' });
   }
